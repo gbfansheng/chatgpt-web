@@ -15,6 +15,8 @@ const temperature = ref(settingStore.temperature ?? 0.5)
 
 const top_p = ref(settingStore.top_p ?? 1)
 
+const gpt_model = ref(settingStore.gpt_model ?? "gpt-3.5-turbo-0613")
+
 function updateSettings(options: Partial<SettingsState>) {
   settingStore.updateSetting(options)
   ms.success(t('common.success'))
@@ -56,6 +58,15 @@ function handleReset() {
         </div>
         <span>{{ top_p }}</span>
         <NButton size="tiny" text type="primary" @click="updateSettings({ top_p })">
+          {{ $t('common.save') }}
+        </NButton>
+      </div>
+      <div class="flex items-center space-x-4">
+        <span class="flex-shrink-0 w-[120px]">{{ $t('setting.gpt_model') }}</span>
+        <div class="flex-1">
+          <NInput v-model:value="gpt_model" type="textarea" :autosize="{ minRows: 1, maxRows: 1 }" />
+        </div>
+        <NButton size="tiny" text type="primary" @click="updateSettings({ gpt_model })">
           {{ $t('common.save') }}
         </NButton>
       </div>

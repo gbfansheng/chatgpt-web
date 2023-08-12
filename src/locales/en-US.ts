@@ -73,6 +73,7 @@ export default {
     httpsProxy: 'HTTPS Proxy',
     balance: 'API Balance',
     monthlyUsage: 'Monthly Usage',
+    gpt_model: 'GPT Model'
   },
   store: {
     siderButton: 'Prompt Store',
