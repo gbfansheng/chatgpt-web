@@ -15,7 +15,7 @@ const temperature = ref(settingStore.temperature ?? 0.5)
 
 const top_p = ref(settingStore.top_p ?? 1)
 
-const gpt_model = ref(settingStore.gpt_model ?? "gpt-3.5-turbo-0613")
+const gpt_model = ref(settingStore.gpt_model ?? "gpt-3.5-turbo-1106")
 
 function updateSettings(options: Partial<SettingsState>) {
   settingStore.updateSetting(options)
