@@ -39,7 +39,7 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
-const gpt_model = ref(useSettingStore().gpt_model ?? "gpt-3.5-turbo-1106")
+const gpt_model = ref(useSettingStore().gpt_model ?? 'gpt-3.5-turbo-1106')
 
 // 添加PromptStore
 const promptStore = usePromptStore()
@@ -358,25 +358,22 @@ function handleExport() {
 }
 
 function handleModelChange() {
-  // console.log(gpt_model.value)
-  //修改模型
+  // 修改模型
   let modelValue = gpt_model.value
-  if (modelValue == "gpt-3.5-turbo-1106") {
-    modelValue = "gpt-4-1106-preview"
-  } else {
-    modelValue = "gpt-3.5-turbo-1106"
-  }
+  if (modelValue == 'gpt-3.5-turbo-1106')
+    modelValue = 'gpt-4-turbo-preview'
+  else
+    modelValue = 'gpt-3.5-turbo-1106'
+
   useSettingStore().updateSetting({ gpt_model: modelValue })
-  console.log(useSettingStore().gpt_model)
   gpt_model.value = modelValue
 }
 
 const gptModelText = computed(() => {
-  if (gpt_model.value == "gpt-3.5-turbo-1106") {
-    return "GPT-3.5"
-  } else {
-    return "GPT-4"
-  }
+  if (gpt_model.value == 'gpt-3.5-turbo-1106')
+    return 'GPT-3.5'
+  else
+    return 'GPT-4'
 })
 
 function handleDelete(index: number) {
@@ -491,8 +488,10 @@ onUnmounted(() => {
     <HeaderComponent v-if="isMobile" :using-context="usingContext" @export="handleExport" @handle-clear="handleClear" />
     <main class="flex-1 overflow-hidden">
       <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
-        <div id="image-wrapper" class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
-          :class="[isMobile ? 'p-2' : 'p-4']">
+        <div
+          id="image-wrapper" class="w-full max-w-screen-xl m-auto dark:bg-[#101014]"
+          :class="[isMobile ? 'p-2' : 'p-4']"
+        >
           <template v-if="!dataSources.length">
             <div class="flex items-center justify-center mt-4 text-center text-neutral-300">
               <SvgIcon icon="ri:bubble-chart-fill" class="mr-2 text-3xl" />
@@ -501,9 +500,11 @@ onUnmounted(() => {
           </template>
           <template v-else>
             <div>
-              <Message v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
+              <Message
+                v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
                 :inversion="item.inversion" :error="item.error" :loading="item.loading" @regenerate="onRegenerate(index)"
-                @delete="handleDelete(index)" />
+                @delete="handleDelete(index)"
+              />
               <div class="sticky bottom-0 left-0 flex justify-center">
                 <NButton v-if="loading" type="warning" @click="handleStop">
                   <template #icon>
@@ -535,13 +536,14 @@ onUnmounted(() => {
               <SvgIcon icon="ri:chat-history-line" />
             </span>
           </HoverButton>
-          <button @click="handleModelChange" v-text="gptModelText" style="min-width: 60px; color: #4b9e5f;">
-          </button>
+          <button style="min-width: 60px; color: #4b9e5f;" @click="handleModelChange" v-text="gptModelText" />
           <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
             <template #default="{ handleInput, handleBlur, handleFocus }">
-              <NInput ref="inputRef" v-model:value="prompt" type="textarea" :placeholder="placeholder"
+              <NInput
+                ref="inputRef" v-model:value="prompt" type="textarea" :placeholder="placeholder"
                 :autosize="{ minRows: 1, maxRows: isMobile ? 4 : 8 }" @input="handleInput" @focus="handleFocus"
-                @blur="handleBlur" @keypress="handleEnter" />
+                @blur="handleBlur" @keypress="handleEnter"
+              />
             </template>
           </NAutoComplete>
           <NButton type="primary" :disabled="buttonDisabled" @click="handleSubmit">
