@@ -1,4 +1,4 @@
-import type { ChatMessage } from 'chatgpt'
+import type { ChatMessage } from 'mtbird-chatgpt'
 import type fetch from 'node-fetch'
 
 export interface RequestOptions {
