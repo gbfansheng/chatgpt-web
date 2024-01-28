@@ -1,4 +1,4 @@
-import type { FetchFn } from 'chatgpt'
+import type { FetchFn } from 'lin-chatgpt'
 
 export interface RequestProps {
   prompt: string
@@ -7,6 +7,8 @@ export interface RequestProps {
   temperature?: number
   top_p?: number
   gpt_model: string
+  tools?: any
+  tool_choice?: string
 }
 
 export interface ChatContext {

@@ -1,7 +1,7 @@
 import * as dotenv from 'dotenv'
 import 'isomorphic-fetch'
-import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'mtbird-chatgpt'
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'mtbird-chatgpt'
+import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'lin-chatgpt'
+import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'lin-chatgpt'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import httpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
@@ -93,7 +93,7 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
 })()
 
 async function chatReplyProcess(options: RequestOptions) {
-  const { message, lastContext, process, systemMessage, temperature, top_p, gpt_model } = options
+  const { message, lastContext, process, systemMessage, temperature, top_p, gpt_model, tools, tool_choice } = options
   try {
     let options: SendMessageOptions = { timeoutMs }
 
@@ -105,6 +105,8 @@ async function chatReplyProcess(options: RequestOptions) {
         options.completionParams = { model, temperature, top_p }
       }
       options.completionParams = { model, temperature, top_p }
+      options.tools = tools
+      options.tool_choice = tool_choice
     }
 
     if (lastContext != null) {

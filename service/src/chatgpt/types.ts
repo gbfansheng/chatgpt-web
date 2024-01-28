@@ -1,4 +1,4 @@
-import type { ChatMessage } from 'mtbird-chatgpt'
+import type { ChatCompletionRequestMessageTool, ChatMessage } from 'lin-chatgpt'
 import type fetch from 'node-fetch'
 
 export interface RequestOptions {
@@ -9,6 +9,8 @@ export interface RequestOptions {
   temperature?: number
   top_p?: number
   gpt_model?: string
+  tools?: Array<ChatCompletionRequestMessageTool>
+  tool_choice?: string
 }
 
 export interface SetProxyOptions {
