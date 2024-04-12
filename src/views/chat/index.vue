@@ -361,7 +361,7 @@ function handleModelChange() {
   // 修改模型
   let modelValue = gpt_model.value
   if (modelValue == 'gpt-3.5-turbo-1106')
-    modelValue = 'gpt-4-turbo-preview'
+    modelValue = 'gpt-4-turbo'
   else
     modelValue = 'gpt-3.5-turbo-1106'
 
