@@ -17,15 +17,21 @@
 	pre code,
 	pre tt {
 		line-height: 1.65;
+		white-space: pre-wrap; /* 添加此行来允许自动换行 */
+		overflow-wrap: break-word; /* 添加此行来确保长单词可以被断开 */
 	}
 
 	.highlight pre,
 	pre {
 		background-color: #fff;
+		white-space: pre-wrap; /* 允许自动换行 */
+		overflow-wrap: break-word; /* 确保长单词可以被断开 */
 	}
 
 	code.hljs {
 		padding: 0;
+		white-space: pre-wrap; /* 允许自动换行 */
+		overflow-wrap: break-word; /* 确保长单词可以被断开 */
 	}
 
 	.code-block {
