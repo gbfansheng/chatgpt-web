@@ -39,7 +39,7 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
-const gpt_model = ref(useSettingStore().gpt_model ?? 'gpt-3.5-turbo-1106')
+const gpt_model = ref(useSettingStore().gpt_model ?? 'gpt-3.5-turbo-0125')
 
 // 添加PromptStore
 const promptStore = usePromptStore()
@@ -360,17 +360,17 @@ function handleExport() {
 function handleModelChange() {
   // 修改模型
   let modelValue = gpt_model.value
-  if (modelValue == 'gpt-3.5-turbo-1106')
+  if (modelValue == 'gpt-3.5-turbo-0125')
     modelValue = 'gpt-4-turbo'
   else
-    modelValue = 'gpt-3.5-turbo-1106'
+    modelValue = 'gpt-3.5-turbo-0125'
 
   useSettingStore().updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
 }
 
 const gptModelText = computed(() => {
-  if (gpt_model.value == 'gpt-3.5-turbo-1106')
+  if (gpt_model.value == 'gpt-3.5-turbo-0125')
     return 'GPT-3.5'
   else
     return 'GPT-4'
