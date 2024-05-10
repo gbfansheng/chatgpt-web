@@ -360,9 +360,11 @@ function handleExport() {
 function handleModelChange() {
   // 修改模型
   let modelValue = gpt_model.value
-  if (modelValue == 'gpt-3.5-turbo-0125')
+  if (modelValue === 'gpt-3.5-turbo-0125')
     modelValue = 'gpt-4-turbo'
-  else
+  else if (modelValue === 'gpt-4-turbo')
+    modelValue = 'deepseek-chat'
+  else if (modelValue === 'deepseek-chat')
     modelValue = 'gpt-3.5-turbo-0125'
 
   useSettingStore().updateSetting({ gpt_model: modelValue })
@@ -370,10 +372,12 @@ function handleModelChange() {
 }
 
 const gptModelText = computed(() => {
-  if (gpt_model.value == 'gpt-3.5-turbo-0125')
+  if (gpt_model.value === 'gpt-3.5-turbo-0125')
     return 'GPT-3.5'
-  else
+  else if (gpt_model.value === 'gpt-4-turbo')
     return 'GPT-4'
+  else
+    return 'DeepSeek-Chat'
 })
 
 function handleDelete(index: number) {

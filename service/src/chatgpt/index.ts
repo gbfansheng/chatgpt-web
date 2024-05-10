@@ -29,21 +29,27 @@ const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG === 'true'
 let apiModel: ApiModel
 let model = isNotEmptyString(process.env.OPENAI_API_MODEL) ? process.env.OPENAI_API_MODEL : 'gpt-3.5-turbo-0125'
 
+const DEEPSEEK_API_BASE_URL = process.env.DEEPSEEK_API_BASE_URL
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
+const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+
 if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.env.OPENAI_ACCESS_TOKEN))
   throw new Error('Missing OPENAI_API_KEY or OPENAI_ACCESS_TOKEN environment variable')
 
-let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
+var api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
 
 (async () => {
   // More Info: https://github.com/transitive-bullshit/chatgpt-api
 
   if (isNotEmptyString(process.env.OPENAI_API_KEY)) {
-    const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
 
     const options: ChatGPTAPIOptions = {
       apiKey: process.env.OPENAI_API_KEY,
       completionParams: { model },
       debug: !disableDebug,
+      maxModelTokens: 32768,
+      maxResponseTokens: 8192,
     }
 
     // increase max token limit if use gpt-4
@@ -114,6 +120,14 @@ async function chatReplyProcess(options: RequestOptions) {
         options.parentMessageId = lastContext.parentMessageId
       else
         options = { ...lastContext }
+    }
+    
+    if (model.includes('deepseek')) {
+      api.apiBaseUrl = `${DEEPSEEK_API_BASE_URL}/v1` 
+      api.apiKey = DEEPSEEK_API_KEY
+    } else {
+      api.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
+      api.apiKey = OPENAI_API_KEY
     }
 
     const response = await api.sendMessage(message, {
