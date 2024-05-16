@@ -37,17 +37,17 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.env.OPENAI_ACCESS_TOKEN))
   throw new Error('Missing OPENAI_API_KEY or OPENAI_ACCESS_TOKEN environment variable')
 
-var api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
+let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
 
 (async () => {
   // More Info: https://github.com/transitive-bullshit/chatgpt-api
 
   if (isNotEmptyString(process.env.OPENAI_API_KEY)) {
-
     const options: ChatGPTAPIOptions = {
       apiKey: process.env.OPENAI_API_KEY,
       completionParams: { model },
       debug: !disableDebug,
+      maxModelTokens: 32768,
     }
 
     // increase max token limit if use gpt-4
@@ -119,15 +119,18 @@ async function chatReplyProcess(options: RequestOptions) {
       else
         options = { ...lastContext }
     }
-    
+
     if (model.includes('deepseek')) {
-      api.apiBaseUrl = `${DEEPSEEK_API_BASE_URL}/v1` 
+      api.apiBaseUrl = `${DEEPSEEK_API_BASE_URL}/v1`
       api.apiKey = DEEPSEEK_API_KEY
-    } else {
+    }
+    else {
       api.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
       api.apiKey = OPENAI_API_KEY
     }
-
+    console.log(model)
+    console.log(api.apiBaseUrl)
+    console.log(api.apiKey)
     const response = await api.sendMessage(message, {
       ...options,
       onProgress: (partialResponse) => {
