@@ -27,7 +27,7 @@ const timeoutMs: number = !isNaN(+process.env.TIMEOUT_MS) ? +process.env.TIMEOUT
 const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG === 'true'
 
 let apiModel: ApiModel
-let model = isNotEmptyString(process.env.OPENAI_API_MODEL) ? process.env.OPENAI_API_MODEL : 'gpt-3.5-turbo-0125'
+let model = isNotEmptyString(process.env.OPENAI_API_MODEL) ? process.env.OPENAI_API_MODEL : 'gpt-4o-mini'
 
 const DEEPSEEK_API_BASE_URL = process.env.DEEPSEEK_API_BASE_URL
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
