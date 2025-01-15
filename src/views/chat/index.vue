@@ -365,8 +365,8 @@ function handleModelChange() {
   else if (modelValue === 'gpt-4-turbo')
     modelValue = 'deepseek-chat'
   else if (modelValue === 'deepseek-chat')
-    modelValue = 'gpt-4o'
-  else if (modelValue === 'gpt-4o')
+    modelValue = 'o1-mini-ca'
+  else if (modelValue === 'o1-mini-ca')
     modelValue = 'gpt-4o-mini'
   useSettingStore().updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
@@ -377,8 +377,8 @@ const gptModelText = computed(() => {
     return 'GPT-4o-mini'
   else if (gpt_model.value === 'gpt-4-turbo')
     return 'GPT-4'
-  else if (gpt_model.value === 'gpt-4o')
-    return 'GPT-4o'
+  else if (gpt_model.value === 'o1-mini-ca')
+    return 'O1-mini'
   else
     return 'DeepSeek-Chat'
 })
