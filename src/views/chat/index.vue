@@ -365,6 +365,10 @@ function handleModelChange() {
   else if (modelValue === 'gpt-4-turbo')
     modelValue = 'deepseek-chat'
   else if (modelValue === 'deepseek-chat')
+    modelValue = 'deepseek-v3'
+  else if (modelValue === 'deepseek-v3')
+    modelValue = 'deepseek-r1'
+  else if (modelValue === 'deepseek-r1')
     modelValue = 'gpt-4o'
   else if (modelValue === 'gpt-4o')
     modelValue = 'gpt-4o-mini'
@@ -379,8 +383,12 @@ const gptModelText = computed(() => {
     return 'GPT-4'
   else if (gpt_model.value === 'gpt-4o')
     return 'GPT-4o'
-  else
-    return 'DeepSeek-Chat'
+  else if (gpt_model.value === 'deepseek-v3')
+    return 'DS-V3'
+  else if (gpt_model.value === 'deepseek-r1')
+    return 'DS-R1'
+  else if (gpt_model.value === 'deepseek-chat')
+    return 'DS-Chat'
 })
 
 function handleDelete(index: number) {
