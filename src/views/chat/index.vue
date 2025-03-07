@@ -385,13 +385,13 @@ const gptModelText = computed(() => {
     return 'GPT-4'
   else if (gpt_model.value === 'gpt-4o')
     return 'GPT-4o'
-  else if (gpt_model.value === 'deepseek/deepseek-v3')
+  else if (gpt_model.value === 'deepseek-v3')
     return 'DS-V3'
-  else if (gpt_model.value === 'deepseek/deepseek-r1')
+  else if (gpt_model.value === 'deepseek-r1')
     return 'DS-R1'
-  else if (gpt_model.value === 'qwen/qwq-32b')
+  else if (gpt_model.value === 'qwq-32b')
     return 'QwQ-32B'
-  else if (gpt_model.value === 'qwen/qwq-plus')
+  else if (gpt_model.value === 'qwq-plus')
     return 'QwQ-Plus'
 })
 
