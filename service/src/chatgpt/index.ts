@@ -33,6 +33,8 @@ const DEEPSEEK_API_BASE_URL = process.env.DEEPSEEK_API_BASE_URL
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
+const QWEN_API_KEY = process.env.QWEN_API_KEY
 
 if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.env.OPENAI_ACCESS_TOKEN))
   throw new Error('Missing OPENAI_API_KEY or OPENAI_ACCESS_TOKEN environment variable')
@@ -123,6 +125,10 @@ async function chatReplyProcess(options: RequestOptions) {
     if (model.includes('deepseek')) {
       api.apiBaseUrl = `${DEEPSEEK_API_BASE_URL}/v1`
       api.apiKey = DEEPSEEK_API_KEY
+    }
+    else if (model.includes('qwen') || model.includes('qwq')) {
+      api.apiBaseUrl = `${QWEN_API_BASE_URL}/v1`
+      api.apiKey = QWEN_API_KEY
     }
     else {
       api.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`

@@ -363,14 +363,16 @@ function handleModelChange() {
   if (modelValue === 'gpt-4o-mini')
     modelValue = 'gpt-4-turbo'
   else if (modelValue === 'gpt-4-turbo')
-    modelValue = 'deepseek/deepseek-chat'
-  else if (modelValue === 'deepseek/deepseek-chat')
-    modelValue = 'deepseek/deepseek-v3'
-  else if (modelValue === 'deepseek/deepseek-v3')
-    modelValue = 'deepseek/deepseek-r1'
-  else if (modelValue === 'deepseek/deepseek-r1')
+    modelValue = 'deepseek-v3'
+  else if (modelValue === 'deepseek-v3')
+    modelValue = 'deepseek-r1'
+  else if (modelValue === 'deepseek-r1')
     modelValue = 'gpt-4o'
   else if (modelValue === 'gpt-4o')
+    modelValue = 'qwq-32b'
+  else if (modelValue === 'qwq-32b')
+    modelValue = 'qwq-plus'
+  else if (modelValue === 'qwq-plus')
     modelValue = 'gpt-4o-mini'
   useSettingStore().updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
@@ -387,8 +389,10 @@ const gptModelText = computed(() => {
     return 'DS-V3'
   else if (gpt_model.value === 'deepseek/deepseek-r1')
     return 'DS-R1'
-  else if (gpt_model.value === 'deepseek/deepseek-chat')
-    return 'DS-Chat'
+  else if (gpt_model.value === 'qwen/qwq-32b')
+    return 'QwQ-32B'
+  else if (gpt_model.value === 'qwen/qwq-plus')
+    return 'QwQ-Plus'
 })
 
 function handleDelete(index: number) {
