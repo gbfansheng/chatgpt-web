@@ -49,7 +49,7 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
       apiKey: process.env.OPENAI_API_KEY,
       completionParams: { model },
       debug: !disableDebug,
-      maxModelTokens: 32768,
+      // maxModelTokens: 32768,
     }
 
     // increase max token limit if use gpt-4
