@@ -115,6 +115,7 @@ async function chatReplyProcess(options: RequestOptions) {
     console.log(model)
     console.log(api.apiBaseUrl)
     console.log(api.apiKey)
+    console.log(message)
     const response = await api.sendMessage(message, {
       ...options,
       onProgress: (partialResponse) => {
