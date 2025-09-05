@@ -49,8 +49,8 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
       apiKey: process.env.OPENAI_API_KEY,
       completionParams: { model },
       debug: !disableDebug,
-      // maxModelTokens: 32768,
-      // maxResponseTokens: 8192,
+      maxModelTokens: 32768,
+      maxResponseTokens: 8192,
     }
 
     if (isNotEmptyString(OPENAI_API_BASE_URL))
