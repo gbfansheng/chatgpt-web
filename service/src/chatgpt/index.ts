@@ -53,7 +53,7 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
     }
 
     // increase max token limit if use gpt-4
-    if (model.toLowerCase().includes('gpt-4')) {
+    if (model.toLowerCase().includes('gpt')) {
       // if use 32k model
       if (model.toLowerCase().includes('32k')) {
         options.maxModelTokens = 32768
