@@ -50,29 +50,7 @@ let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
       completionParams: { model },
       debug: !disableDebug,
       maxModelTokens: 32768,
-    }
-
-    // increase max token limit if use gpt-4
-    if (model.toLowerCase().includes('gpt')) {
-      // if use 32k model
-      if (model.toLowerCase().includes('32k')) {
-        options.maxModelTokens = 32768
-        options.maxResponseTokens = 8192
-      }
-      else {
-        options.maxModelTokens = 8192
-        options.maxResponseTokens = 2048
-      }
-    }
-    else if (model.toLowerCase().includes('gpt-3.5')) {
-      if (model.toLowerCase().includes('32k')) {
-        options.maxModelTokens = 32768
-        options.maxResponseTokens = 8192
-      }
-      else if (model.toLowerCase().includes('16k')) {
-        options.maxModelTokens = 16384
-        options.maxResponseTokens = 4096
-      }
+      maxResponseTokens: 8192,
     }
 
     if (isNotEmptyString(OPENAI_API_BASE_URL))
