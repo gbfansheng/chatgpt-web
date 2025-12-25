@@ -39,7 +39,7 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
-const gpt_model = ref(useSettingStore().gpt_model ?? 'gpt-4o-mini')
+const gpt_model = ref(useSettingStore().gpt_model ?? 'gemini-3-flash-preview')
 
 // 添加PromptStore
 const promptStore = usePromptStore()
@@ -360,39 +360,23 @@ function handleExport() {
 function handleModelChange() {
   // 修改模型
   let modelValue = gpt_model.value
-  if (modelValue === 'gpt-4o-mini')
-    modelValue = 'gpt-4-turbo'
-  else if (modelValue === 'gpt-4-turbo')
-    modelValue = 'deepseek-v3'
-  else if (modelValue === 'deepseek-v3')
-    modelValue = 'deepseek-r1'
-  else if (modelValue === 'deepseek-r1')
-    modelValue = 'gpt-4o'
-  else if (modelValue === 'gpt-4o')
-    modelValue = 'gpt-5'
-  else if (modelValue === 'gpt-5')
+  if (modelValue === 'qwen-plus')
+    modelValue = 'gemini-3'
+  else if (modelValue === 'gemini-3')
+    modelValue = 'gemini-3-flash-preview'
+  else if (modelValue === 'gemini-3-flash-preview')
     modelValue = 'qwen-plus'
-  else if (modelValue === 'qwen-plus')
-    modelValue = 'gpt-4o-mini'
   useSettingStore().updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
 }
 
 const gptModelText = computed(() => {
-  if (gpt_model.value === 'gpt-4o-mini')
-    return 'GPT-4o-mini'
-  else if (gpt_model.value === 'gpt-4-turbo')
-    return 'GPT-4'
-  else if (gpt_model.value === 'gpt-4o')
-    return 'GPT-4o'
-  else if (gpt_model.value === 'gpt-5')
-    return 'GPT-5'
-  else if (gpt_model.value === 'deepseek-v3')
-    return 'DS-V3'
-  else if (gpt_model.value === 'deepseek-r1')
-    return 'DS-R1'
-  else if (gpt_model.value === 'qwen-plus')
+  if (gpt_model.value === 'qwen-plus')
     return 'Qwen-Plus'
+  else if (gpt_model.value === 'gemini-3')
+    return 'Gemini-3'
+  else if (gpt_model.value === 'gemini-3-flash-preview')
+    return 'Gemini-3-Flash'
 })
 
 function handleDelete(index: number) {

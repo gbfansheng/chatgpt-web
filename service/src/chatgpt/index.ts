@@ -3,14 +3,12 @@ import 'isomorphic-fetch'
 import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'lin-chatgpt'
 import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'lin-chatgpt'
 import { SocksProxyAgent } from 'socks-proxy-agent'
-import httpsProxyAgent from 'https-proxy-agent'
+import { HttpsProxyAgent } from 'https-proxy-agent'
 import fetch from 'node-fetch'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
 import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
 import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
-
-const { HttpsProxyAgent } = httpsProxyAgent
 
 dotenv.config()
 
@@ -35,6 +33,8 @@ const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
 const QWEN_API_KEY = process.env.QWEN_API_KEY
+const TUZI_API_BASE_URL = process.env.TUZI_API_BASE_URL || 'https://api.tu-zi.com'
+const TUZI_API_KEY = process.env.TUZI_API_KEY
 
 if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.env.OPENAI_ACCESS_TOKEN))
   throw new Error('Missing OPENAI_API_KEY or OPENAI_ACCESS_TOKEN environment variable')
@@ -107,6 +107,10 @@ async function chatReplyProcess(options: RequestOptions) {
     else if (model.includes('qwen') || model.includes('qwq')) {
       api.apiBaseUrl = `${QWEN_API_BASE_URL}/v1`
       api.apiKey = QWEN_API_KEY
+    }
+    else if (model.includes('gemini')) {
+      api.apiBaseUrl = `${TUZI_API_BASE_URL}/v1`
+      api.apiKey = TUZI_API_KEY
     }
     else {
       api.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
