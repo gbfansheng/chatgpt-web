@@ -361,8 +361,8 @@ function handleModelChange() {
   // 修改模型
   let modelValue = gpt_model.value
   if (modelValue === 'qwen-plus')
-    modelValue = 'gemini-3'
-  else if (modelValue === 'gemini-3')
+    modelValue = 'gemini-3-pro'
+  else if (modelValue === 'gemini-3-pro')
     modelValue = 'gemini-3-flash-preview'
   else if (modelValue === 'gemini-3-flash-preview')
     modelValue = 'qwen-plus'
@@ -373,8 +373,8 @@ function handleModelChange() {
 const gptModelText = computed(() => {
   if (gpt_model.value === 'qwen-plus')
     return 'Qwen-Plus'
-  else if (gpt_model.value === 'gemini-3')
-    return 'Gemini-3'
+  else if (gpt_model.value === 'gemini-3-pro')
+    return 'Gemini-3-Pro'
   else if (gpt_model.value === 'gemini-3-flash-preview')
     return 'Gemini-3-Flash'
 })
