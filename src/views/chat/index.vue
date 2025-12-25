@@ -381,6 +381,8 @@ const gptModelText = computed(() => {
     return 'Gemini-3-Flash'
   else if (gpt_model.value === 'gpt-5.1')
     return 'GPT-5.1'
+  else
+    return 'Gemini-3-Flash' // 默认显示
 })
 
 function handleDelete(index: number) {
