@@ -365,6 +365,8 @@ function handleModelChange() {
   else if (modelValue === 'gemini-3-pro')
     modelValue = 'gemini-3-flash-preview'
   else if (modelValue === 'gemini-3-flash-preview')
+    modelValue = 'gpt-5.1'
+  else if (modelValue === 'gpt-5.1')
     modelValue = 'qwen-plus'
   useSettingStore().updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
@@ -377,6 +379,8 @@ const gptModelText = computed(() => {
     return 'Gemini-3-Pro'
   else if (gpt_model.value === 'gemini-3-flash-preview')
     return 'Gemini-3-Flash'
+  else if (gpt_model.value === 'gpt-5.1')
+    return 'GPT-5.1'
 })
 
 function handleDelete(index: number) {

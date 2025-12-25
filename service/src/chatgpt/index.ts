@@ -108,7 +108,7 @@ async function chatReplyProcess(options: RequestOptions) {
       api.apiBaseUrl = `${QWEN_API_BASE_URL}/v1`
       api.apiKey = QWEN_API_KEY
     }
-    else if (model.includes('gemini')) {
+    else if (model.includes('gemini') || model.includes('gpt-5.1')) {
       api.apiBaseUrl = `${TUZI_API_BASE_URL}/v1`
       api.apiKey = TUZI_API_KEY
     }
