@@ -39,7 +39,6 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   conversationId?: string
   parentMessageId?: string
-  thinking?: string
   images?: string[]
   detail?: any
 }
@@ -98,18 +97,6 @@ function setupProxy(): any {
     }
   }
   return undefined
-}
-
-// 解析thinking内容
-function parseThinking(text: string): { thinking: string; response: string } {
-  const thinkingMatch = text.match(/<thinking>([\s\S]*?)<\/thinking>/i)
-  if (thinkingMatch) {
-    return {
-      thinking: thinkingMatch[1].trim(),
-      response: text.replace(/<thinking>[\s\S]*?<\/thinking>/i, '').trim()
-    }
-  }
-  return { thinking: '', response: text }
 }
 
 async function chatReplyProcess(options: RequestOptions) {
@@ -211,13 +198,9 @@ async function chatReplyProcess(options: RequestOptions) {
               if (delta) {
                 fullText += delta
                 
-                // 解析thinking和response
-                const { thinking, response: responseText } = parseThinking(fullText)
-                
                 const chatMessage: ChatMessage = {
                   id: messageId,
-                  text: responseText,
-                  thinking,
+                  text: fullText,
                   role: 'assistant',
                   conversationId,
                   parentMessageId: lastContext?.parentMessageId,
@@ -235,11 +218,9 @@ async function chatReplyProcess(options: RequestOptions) {
       }
     }
     
-    const { thinking, response: responseText } = parseThinking(fullText)
     const finalMessage: ChatMessage = {
       id: messageId,
-      text: responseText,
-      thinking,
+      text: fullText,
       role: 'assistant',
       conversationId,
       parentMessageId: lastContext?.parentMessageId,

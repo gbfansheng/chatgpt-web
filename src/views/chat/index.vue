@@ -136,6 +136,7 @@ async function onConversation() {
               {
                 dateTime: new Date().toLocaleString(),
                 text: lastText + (data.text ?? ''),
+                thinking: data.thinking ?? '',
                 inversion: false,
                 error: false,
                 loading: true,
@@ -267,6 +268,7 @@ async function onRegenerate(index: number) {
               {
                 dateTime: new Date().toLocaleString(),
                 text: lastText + (data.text ?? ''),
+                thinking: data.thinking ?? '',
                 inversion: false,
                 error: false,
                 loading: true,
@@ -520,6 +522,7 @@ onUnmounted(() => {
             <div>
               <Message
                 v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
+                :thinking="item.thinking"
                 :inversion="item.inversion" :error="item.error" :loading="item.loading" @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />

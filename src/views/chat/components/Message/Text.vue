@@ -12,6 +12,7 @@ interface Props {
   inversion?: boolean
   error?: boolean
   text?: string
+  thinking?: string
   loading?: boolean
   asRawText?: boolean
 }
@@ -21,6 +22,7 @@ const props = defineProps<Props>()
 const { isMobile } = useBasicLayout()
 
 const textRef = ref<HTMLElement>()
+const thinkingExpanded = ref(false)
 
 const mdi = new MarkdownIt({
   html: false,
@@ -52,11 +54,51 @@ const wrapClass = computed(() => {
 })
 
 const text = computed(() => {
-  const value = props.text ?? ''
+  let value = props.text ?? ''
+  
+  // 移除已闭合的 thinking 标签
+  value = value.replace(/<think>[\s\S]*?<\/think>/i, '')
+  value = value.replace(/<thinking>[\s\S]*?<\/thinking>/i, '')
+  // 移除未闭合的 thinking 标签
+  value = value.replace(/<think>[\s\S]*$/i, '')
+  value = value.replace(/<thinking>[\s\S]*$/i, '')
+  
   if (!props.asRawText)
     return mdi.render(value)
   return value
 })
+
+// 从原始文本中提取 thinking 内容（支持流式未闭合）
+const thinkingContent = computed(() => {
+  const value = props.text ?? ''
+  
+  // 先尝试完整闭合的标签
+  let match = value.match(/<think>([\s\S]*?)<\/think>/i)
+  if (match) return match[1].trim()
+  
+  match = value.match(/<thinking>([\s\S]*?)<\/thinking>/i)
+  if (match) return match[1].trim()
+  
+  // 再尝试未闭合的标签（流式输出中）
+  match = value.match(/<think>([\s\S]*)$/i)
+  if (match) return match[1].trim()
+  
+  match = value.match(/<thinking>([\s\S]*)$/i)
+  if (match) return match[1].trim()
+  
+  return ''
+})
+
+const thinkingText = computed(() => {
+  const value = thinkingContent.value
+  if (!props.asRawText)
+    return mdi.render(value)
+  return value
+})
+
+function toggleThinking() {
+  thinkingExpanded.value = !thinkingExpanded.value
+}
 
 function highlightBlock(str: string, lang?: string) {
   return `<pre class="code-block-wrapper"><div class="code-block-header"><span class="code-block-header__lang">${lang}</span><span class="code-block-header__copy">${t('chat.copyCode')}</span></div><code class="hljs code-block-body ${lang}">${str}</code></pre>`
@@ -106,6 +148,25 @@ onUnmounted(() => {
 <template>
   <div class="text-black" :class="wrapClass">
     <div ref="textRef" class="leading-relaxed break-words">
+      <!-- Thinking 展示 -->
+      <div v-if="!inversion && thinkingContent" class="thinking-block mb-3">
+        <div 
+          class="thinking-header flex items-center cursor-pointer text-gray-500 dark:text-gray-400 text-sm"
+          @click="toggleThinking"
+        >
+          <span class="mr-1">{{ thinkingExpanded ? '▼' : '▶' }}</span>
+          <span>💭 思考过程</span>
+          <span class="ml-2 text-xs text-gray-400">(点击{{ thinkingExpanded ? '收起' : '展开' }})</span>
+        </div>
+        <div 
+          v-show="thinkingExpanded" 
+          class="thinking-content mt-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-md text-gray-600 dark:text-gray-300 text-sm border-l-4 border-blue-400"
+        >
+          <div v-if="!asRawText" class="markdown-body" v-html="thinkingText" />
+          <div v-else class="whitespace-pre-wrap" v-text="thinkingContent" />
+        </div>
+      </div>
+      <!-- 正文内容 -->
       <div v-if="!inversion">
         <div v-if="!asRawText" class="markdown-body" v-html="text" />
         <div v-else class="whitespace-pre-wrap" v-text="text" />

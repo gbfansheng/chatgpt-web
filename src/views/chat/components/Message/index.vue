@@ -12,6 +12,7 @@ import { copyToClip } from '@/utils/copy'
 interface Props {
   dateTime?: string
   text?: string
+  thinking?: string
   inversion?: boolean
   error?: boolean
   loading?: boolean
@@ -117,6 +118,7 @@ async function handleCopy() {
           :inversion="inversion"
           :error="error"
           :text="text"
+          :thinking="thinking"
           :loading="loading"
           :as-raw-text="asRawText"
         />

@@ -11,17 +11,20 @@
 - ✅ 添加 Gemini 模型支持 (gemini-3-pro, gemini-3-flash-preview)
 - ✅ 添加 GPT-5.1 模型支持
 - ✅ 图片对话基础支持 (多模态消息结构)
-- ✅ Thinking 解析支持 (`<thinking>...</thinking>`)
 - ✅ 简化模型切换 (Qwen-Plus, Gemini-3-Pro, Gemini-3-Flash, GPT-5.1)
 - ✅ 设置 Gemini-3-Flash 为默认模型
 - ✅ 修复对话上下文管理 (conversationHistory)
 - ✅ 修复前端请求处理 (移除 isChatGPTAPI 条件判断)
 - ✅ 修复响应验证逻辑 (支持流式响应格式)
 - ✅ 修复 rate limiter 警告
+- ✅ Thinking 展示功能
+  - 前端解析 `<think>` 和 `<thinking>` 标签
+  - 支持流式输出时实时显示思考过程
+  - 折叠/展开组件，默认隐藏
+  - 过滤未闭合标签避免显示原始标签
 
 ## 待完成
 - ❌ 前端图片上传组件
-- ❌ 前端 Thinking 展示组件  
 - ❌ 聊天服务器存储 (数据库)
 
 ## 待实现功能
