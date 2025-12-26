@@ -25,7 +25,8 @@ function http<T = any>(
   const successHandler = (res: AxiosResponse<Response<T>>) => {
     const authStore = useAuthStore()
 
-    if (res.data.status === 'Success' || typeof res.data === 'string')
+    // 流式响应或普通成功响应
+    if (res.data.status === 'Success' || typeof res.data === 'string' || res.data.id)
       return res.data
 
     if (res.data.status === 'Unauthorized') {

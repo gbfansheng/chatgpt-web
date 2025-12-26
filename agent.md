@@ -4,18 +4,25 @@
 移除 `chatgpt` 依赖，重构为原生实现，支持现代 AI 对话功能。
 
 ## 已完成
+- ✅ 移除 `lin-chatgpt@5.1.6` 依赖
+- ✅ 重写后端 API 调用逻辑 (原生 fetch + async iteration)
+- ✅ 支持多 API 提供商 (OpenAI、DeepSeek、Qwen、Tuzi)
+- ✅ 流式响应处理
 - ✅ 添加 Gemini 模型支持 (gemini-3-pro, gemini-3-flash-preview)
 - ✅ 添加 GPT-5.1 模型支持
-- ✅ 配置 tuzi API 端点
-- ✅ 简化模型切换 (只保留 Qwen-Plus, Gemini-3-Pro, Gemini-3-Flash, GPT-5.1)
+- ✅ 图片对话基础支持 (多模态消息结构)
+- ✅ Thinking 解析支持 (`<thinking>...</thinking>`)
+- ✅ 简化模型切换 (Qwen-Plus, Gemini-3-Pro, Gemini-3-Flash, GPT-5.1)
 - ✅ 设置 Gemini-3-Flash 为默认模型
+- ✅ 修复对话上下文管理 (conversationHistory)
+- ✅ 修复前端请求处理 (移除 isChatGPTAPI 条件判断)
+- ✅ 修复响应验证逻辑 (支持流式响应格式)
+- ✅ 修复 rate limiter 警告
 
 ## 待完成
-- ❌ 移除 `lin-chatgpt@5.1.6` 依赖 (仍在使用)
-- ❌ 重写后端 API 调用逻辑 (仍使用旧代码)
-- ❌ 图片对话支持
-- ❌ Thinking 展示
-- ❌ 聊天服务器存储
+- ❌ 前端图片上传组件
+- ❌ 前端 Thinking 展示组件  
+- ❌ 聊天服务器存储 (数据库)
 
 ## 待实现功能
 

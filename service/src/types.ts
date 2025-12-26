@@ -1,5 +1,3 @@
-import type { FetchFn } from 'lin-chatgpt'
-
 export interface RequestProps {
   prompt: string
   options?: ChatContext
@@ -7,6 +5,8 @@ export interface RequestProps {
   temperature?: number
   top_p?: number
   gpt_model: string
+  images?: string[]
+  conversationHistory?: Array<{ text: string; inversion: boolean }>
   tools?: any
   tool_choice?: string
 }
@@ -14,15 +14,6 @@ export interface RequestProps {
 export interface ChatContext {
   conversationId?: string
   parentMessageId?: string
-}
-
-export interface ChatGPTUnofficialProxyAPIOptions {
-  accessToken: string
-  apiReverseProxyUrl?: string
-  model?: string
-  debug?: boolean
-  headers?: Record<string, string>
-  fetch?: FetchFn
 }
 
 export interface ModelConfig {

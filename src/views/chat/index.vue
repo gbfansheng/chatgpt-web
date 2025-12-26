@@ -107,9 +107,18 @@ async function onConversation() {
   try {
     let lastText = ''
     const fetchChatAPIOnce = async () => {
+      // 构建对话历史 - 关键修复！
+      const conversationHistory = dataSources.value
+        .filter(item => !item.loading && !item.error)
+        .map(item => ({
+          text: item.text,
+          inversion: item.inversion
+        }))
+
       await fetchChatAPIProcess<Chat.ConversationResponse>({
         prompt: message,
         options,
+        conversationHistory, // 传入完整对话历史
         signal: controller.signal,
         onDownloadProgress: ({ event }) => {
           const xhr = event.target
@@ -135,7 +144,7 @@ async function onConversation() {
               },
             )
 
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
+            if (openLongReply && data.detail?.choices?.[0]?.finish_reason === 'length') {
               options.parentMessageId = data.id
               lastText = data.text
               message = ''
@@ -266,7 +275,7 @@ async function onRegenerate(index: number) {
               },
             )
 
-            if (openLongReply && data.detail.choices[0].finish_reason === 'length') {
+            if (openLongReply && data.detail?.choices?.[0]?.finish_reason === 'length') {
               options.parentMessageId = data.id
               lastText = data.text
               message = ''

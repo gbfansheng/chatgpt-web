@@ -1,238 +1,281 @@
 import * as dotenv from 'dotenv'
-import 'isomorphic-fetch'
-import type { ChatGPTAPIOptions, ChatMessage, SendMessageOptions } from 'lin-chatgpt'
-import { ChatGPTAPI, ChatGPTUnofficialProxyAPI } from 'lin-chatgpt'
 import { SocksProxyAgent } from 'socks-proxy-agent'
 import { HttpsProxyAgent } from 'https-proxy-agent'
 import fetch from 'node-fetch'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
-import type { ApiModel, ChatContext, ChatGPTUnofficialProxyAPIOptions, ModelConfig } from '../types'
-import type { RequestOptions, SetProxyOptions, UsageResponse } from './types'
+import type { ApiModel, ChatContext, ModelConfig } from '../types'
+import type { RequestOptions } from './types'
 
 dotenv.config()
 
 const ErrorCodeMessage: Record<string, string> = {
-  401: '[OpenAI] 提供错误的API密钥 | Incorrect API key provided',
-  403: '[OpenAI] 服务器拒绝访问，请稍后再试 | Server refused to access, please try again later',
-  502: '[OpenAI] 错误的网关 |  Bad Gateway',
-  503: '[OpenAI] 服务器繁忙，请稍后再试 | Server is busy, please try again later',
-  504: '[OpenAI] 网关超时 | Gateway Time-out',
-  500: '[OpenAI] 服务器繁忙，请稍后再试 | Internal Server Error',
+  401: '[API] 提供错误的API密钥 | Incorrect API key provided',
+  403: '[API] 服务器拒绝访问，请稍后再试 | Server refused to access, please try again later',
+  429: '[API] 请求过于频繁，请稍后再试 | Too many requests, please try again later',
+  502: '[API] 错误的网关 | Bad Gateway',
+  503: '[API] 服务器繁忙，请稍后再试 | Server is busy, please try again later',
+  504: '[API] 网关超时 | Gateway Time-out',
+  500: '[API] 服务器繁忙，请稍后再试 | Internal Server Error',
 }
 
 const timeoutMs: number = !isNaN(+process.env.TIMEOUT_MS) ? +process.env.TIMEOUT_MS : 100 * 1000
-const disableDebug: boolean = process.env.OPENAI_API_DISABLE_DEBUG === 'true'
 
-let apiModel: ApiModel
-let model = isNotEmptyString(process.env.OPENAI_API_MODEL) ? process.env.OPENAI_API_MODEL : 'gpt-4o-mini'
-
+// API配置
+const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL || 'https://api.openai.com'
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const DEEPSEEK_API_BASE_URL = process.env.DEEPSEEK_API_BASE_URL
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
-const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
 const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
 const QWEN_API_KEY = process.env.QWEN_API_KEY
 const TUZI_API_BASE_URL = process.env.TUZI_API_BASE_URL || 'https://api.tu-zi.com'
 const TUZI_API_KEY = process.env.TUZI_API_KEY
 
-if (!isNotEmptyString(process.env.OPENAI_API_KEY) && !isNotEmptyString(process.env.OPENAI_ACCESS_TOKEN))
-  throw new Error('Missing OPENAI_API_KEY or OPENAI_ACCESS_TOKEN environment variable')
+let apiModel: ApiModel = 'ChatGPTAPI'
 
-let api: ChatGPTAPI | ChatGPTUnofficialProxyAPI
+export interface ChatMessage {
+  id: string
+  text: string
+  role: 'user' | 'assistant' | 'system'
+  conversationId?: string
+  parentMessageId?: string
+  thinking?: string
+  images?: string[]
+  detail?: any
+}
 
-(async () => {
-  // More Info: https://github.com/transitive-bullshit/chatgpt-api
+interface APIMessage {
+  role: 'user' | 'assistant' | 'system'
+  content: string | Array<{ 
+    type: 'text' | 'image_url'
+    text?: string
+    image_url?: { url: string }
+  }>
+}
 
-  if (isNotEmptyString(process.env.OPENAI_API_KEY)) {
-    const options: ChatGPTAPIOptions = {
-      apiKey: process.env.OPENAI_API_KEY,
-      completionParams: { model },
-      debug: !disableDebug,
-      maxModelTokens: 32768,
-      maxResponseTokens: 8192,
+// 获取API配置
+function getAPIConfig(model: string) {
+  if (model.includes('deepseek')) {
+    return {
+      baseURL: `${DEEPSEEK_API_BASE_URL}/v1`,
+      apiKey: DEEPSEEK_API_KEY,
     }
-
-    if (isNotEmptyString(OPENAI_API_BASE_URL))
-      options.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
-
-    setupProxy(options)
-    console.log(options)
-    api = new ChatGPTAPI({ ...options })
-    apiModel = 'ChatGPTAPI'
+  }
+  else if (model.includes('qwen') || model.includes('qwq')) {
+    return {
+      baseURL: `${QWEN_API_BASE_URL}/v1`,
+      apiKey: QWEN_API_KEY,
+    }
+  }
+  else if (model.includes('gemini') || model.includes('gpt-5.1')) {
+    return {
+      baseURL: `${TUZI_API_BASE_URL}/v1`,
+      apiKey: TUZI_API_KEY,
+    }
   }
   else {
-    const options: ChatGPTUnofficialProxyAPIOptions = {
-      accessToken: process.env.OPENAI_ACCESS_TOKEN,
-      apiReverseProxyUrl: isNotEmptyString(process.env.API_REVERSE_PROXY) ? process.env.API_REVERSE_PROXY : 'https://ai.fakeopen.com/api/conversation',
-      model,
-      debug: !disableDebug,
+    return {
+      baseURL: `${OPENAI_API_BASE_URL}/v1`,
+      apiKey: OPENAI_API_KEY,
     }
-
-    setupProxy(options)
-
-    api = new ChatGPTUnofficialProxyAPI({ ...options })
-    apiModel = 'ChatGPTUnofficialProxyAPI'
-  }
-})()
-
-async function chatReplyProcess(options: RequestOptions) {
-  const { message, lastContext, process, systemMessage, temperature, top_p, gpt_model, tools, tool_choice } = options
-  try {
-    let options: SendMessageOptions = { timeoutMs }
-
-    if (apiModel === 'ChatGPTAPI') {
-      if (isNotEmptyString(systemMessage))
-        options.systemMessage = systemMessage
-      if (isNotEmptyString(gpt_model)) { // read options.gpt_model
-        model = isNotEmptyString(gpt_model) ? gpt_model : model
-        options.completionParams = { model, temperature, top_p }
-      }
-      options.completionParams = { model, temperature, top_p }
-      options.tools = tools
-      options.tool_choice = tool_choice
-    }
-
-    if (lastContext != null) {
-      if (apiModel === 'ChatGPTAPI')
-        options.parentMessageId = lastContext.parentMessageId
-      else
-        options = { ...lastContext }
-    }
-
-    if (model.includes('deepseek')) {
-      api.apiBaseUrl = `${DEEPSEEK_API_BASE_URL}/v1`
-      api.apiKey = DEEPSEEK_API_KEY
-    }
-    else if (model.includes('qwen') || model.includes('qwq')) {
-      api.apiBaseUrl = `${QWEN_API_BASE_URL}/v1`
-      api.apiKey = QWEN_API_KEY
-    }
-    else if (model.includes('gemini') || model.includes('gpt-5.1')) {
-      api.apiBaseUrl = `${TUZI_API_BASE_URL}/v1`
-      api.apiKey = TUZI_API_KEY
-    }
-    else {
-      api.apiBaseUrl = `${OPENAI_API_BASE_URL}/v1`
-      api.apiKey = OPENAI_API_KEY
-    }
-    console.log(model)
-    console.log(api.apiBaseUrl)
-    console.log(api.apiKey)
-    console.log(message)
-    const response = await api.sendMessage(message, {
-      ...options,
-      onProgress: (partialResponse) => {
-        process?.(partialResponse)
-      },
-    })
-
-    return sendResponse({ type: 'Success', data: response })
-  }
-  catch (error: any) {
-    const code = error.statusCode
-    global.console.log(error)
-    if (Reflect.has(ErrorCodeMessage, code))
-      return sendResponse({ type: 'Fail', message: ErrorCodeMessage[code] })
-    return sendResponse({ type: 'Fail', message: error.message ?? 'Please check the back-end console' })
   }
 }
 
-async function fetchUsage() {
-  const OPENAI_API_KEY = process.env.OPENAI_API_KEY
-  const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL
-
-  if (!isNotEmptyString(OPENAI_API_KEY))
-    return Promise.resolve('-')
-
-  const API_BASE_URL = isNotEmptyString(OPENAI_API_BASE_URL)
-    ? OPENAI_API_BASE_URL
-    : 'https://api.openai.com'
-
-  const [startDate, endDate] = formatDate()
-
-  // 每月使用量
-  const urlUsage = `${API_BASE_URL}/v1/dashboard/billing/usage?start_date=${startDate}&end_date=${endDate}`
-
-  const headers = {
-    'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    'Content-Type': 'application/json',
-  }
-
-  const options = {} as SetProxyOptions
-
-  setupProxy(options)
-
-  try {
-    // 获取已使用量
-    const useResponse = await options.fetch(urlUsage, { headers })
-    if (!useResponse.ok)
-      throw new Error('获取使用量失败')
-    const usageData = await useResponse.json() as UsageResponse
-    const usage = Math.round(usageData.total_usage) / 100
-    return Promise.resolve(usage ? `$${usage}` : '-')
-  }
-  catch (error) {
-    global.console.log(error)
-    return Promise.resolve('-')
-  }
-}
-
-function formatDate(): string[] {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth() + 1
-  const lastDay = new Date(year, month, 0)
-  const formattedFirstDay = `${year}-${month.toString().padStart(2, '0')}-01`
-  const formattedLastDay = `${year}-${month.toString().padStart(2, '0')}-${lastDay.getDate().toString().padStart(2, '0')}`
-  return [formattedFirstDay, formattedLastDay]
-}
-
-async function chatConfig() {
-  const usage = await fetchUsage()
-  const reverseProxy = process.env.API_REVERSE_PROXY ?? '-'
-  const httpsProxy = (process.env.HTTPS_PROXY || process.env.ALL_PROXY) ?? '-'
-  const socksProxy = (process.env.SOCKS_PROXY_HOST && process.env.SOCKS_PROXY_PORT)
-    ? (`${process.env.SOCKS_PROXY_HOST}:${process.env.SOCKS_PROXY_PORT}`)
-    : '-'
-  return sendResponse<ModelConfig>({
-    type: 'Success',
-    data: { apiModel, reverseProxy, timeoutMs, socksProxy, httpsProxy, usage },
-  })
-}
-
-function setupProxy(options: SetProxyOptions) {
+// 设置代理
+function setupProxy(): any {
   if (isNotEmptyString(process.env.SOCKS_PROXY_HOST) && isNotEmptyString(process.env.SOCKS_PROXY_PORT)) {
-    const agent = new SocksProxyAgent({
+    return new SocksProxyAgent({
       hostname: process.env.SOCKS_PROXY_HOST,
       port: process.env.SOCKS_PROXY_PORT,
       userId: isNotEmptyString(process.env.SOCKS_PROXY_USERNAME) ? process.env.SOCKS_PROXY_USERNAME : undefined,
       password: isNotEmptyString(process.env.SOCKS_PROXY_PASSWORD) ? process.env.SOCKS_PROXY_PASSWORD : undefined,
     })
-    options.fetch = (url, options) => {
-      return fetch(url, { agent, ...options })
-    }
   }
   else if (isNotEmptyString(process.env.HTTPS_PROXY) || isNotEmptyString(process.env.ALL_PROXY)) {
     const httpsProxy = process.env.HTTPS_PROXY || process.env.ALL_PROXY
     if (httpsProxy) {
-      const agent = new HttpsProxyAgent(httpsProxy)
-      options.fetch = (url, options) => {
-        return fetch(url, { agent, ...options })
+      return new HttpsProxyAgent(httpsProxy)
+    }
+  }
+  return undefined
+}
+
+// 解析thinking内容
+function parseThinking(text: string): { thinking: string; response: string } {
+  const thinkingMatch = text.match(/<thinking>([\s\S]*?)<\/thinking>/i)
+  if (thinkingMatch) {
+    return {
+      thinking: thinkingMatch[1].trim(),
+      response: text.replace(/<thinking>[\s\S]*?<\/thinking>/i, '').trim()
+    }
+  }
+  return { thinking: '', response: text }
+}
+
+async function chatReplyProcess(options: RequestOptions) {
+  const { 
+    message, 
+    lastContext, 
+    process, 
+    systemMessage, 
+    temperature = 0.8, 
+    top_p = 1, 
+    gpt_model = 'gemini-3-flash-preview',
+    images = [],
+    conversationHistory = [] // 需要传入完整对话历史
+  } = options
+  
+  try {
+    const config = getAPIConfig(gpt_model)
+    const agent = setupProxy()
+    
+    // 构建消息内容
+    let content: string | Array<any> = message
+    
+    // 如果有图片，构建多模态内容
+    if (images && images.length > 0) {
+      content = [
+        { type: 'text', text: message },
+        ...images.map(img => ({
+          type: 'image_url',
+          image_url: { url: img }
+        }))
+      ]
+    }
+    
+    // 构建完整的消息历史 - 这是关键！
+    const messages: APIMessage[] = []
+    
+    if (systemMessage) {
+      messages.push({ role: 'system', content: systemMessage })
+    }
+    
+    // 添加历史对话上下文
+    if (conversationHistory && conversationHistory.length > 0) {
+      conversationHistory.forEach(msg => {
+        messages.push({
+          role: msg.inversion ? 'user' : 'assistant',
+          content: msg.text
+        })
+      })
+    }
+    
+    // 添加当前用户消息
+    messages.push({ role: 'user', content })
+    
+    // ... 其余代码保持不变
+    
+    const requestBody = {
+      model: gpt_model,
+      messages,
+      temperature,
+      top_p,
+      stream: true,
+    }
+    
+    const response = await fetch(`${config.baseURL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+      agent,
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(`API Error ${response.status}: ${errorText}`)
+    }
+    
+    let fullText = ''
+    const conversationId = Date.now().toString()
+    const messageId = Date.now().toString()
+    
+    // 处理流式响应
+    if (response.body) {
+      const decoder = new TextDecoder()
+      
+      for await (const chunk of response.body) {
+        const chunkText = decoder.decode(chunk, { stream: true })
+        const lines = chunkText.split('\n')
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+            
+            try {
+              const parsed = JSON.parse(data)
+              const delta = parsed.choices?.[0]?.delta?.content
+              if (delta) {
+                fullText += delta
+                
+                // 解析thinking和response
+                const { thinking, response: responseText } = parseThinking(fullText)
+                
+                const chatMessage: ChatMessage = {
+                  id: messageId,
+                  text: responseText,
+                  thinking,
+                  role: 'assistant',
+                  conversationId,
+                  parentMessageId: lastContext?.parentMessageId,
+                  images: images || [],
+                  detail: parsed,
+                }
+                
+                process?.(chatMessage)
+              }
+            } catch (e) {
+              // 忽略解析错误
+            }
+          }
+        }
       }
     }
-  }
-  else {
-    options.fetch = (url, options) => {
-      return fetch(url, { ...options })
+    
+    const { thinking, response: responseText } = parseThinking(fullText)
+    const finalMessage: ChatMessage = {
+      id: messageId,
+      text: responseText,
+      thinking,
+      role: 'assistant',
+      conversationId,
+      parentMessageId: lastContext?.parentMessageId,
+      images: images || [],
     }
+    
+    return sendResponse({ type: 'Success', data: finalMessage })
   }
+  catch (error: any) {
+    const code = error.status || error.statusCode
+    console.error('Chat API Error:', error)
+    
+    if (Reflect.has(ErrorCodeMessage, code)) {
+      return sendResponse({ type: 'Fail', message: ErrorCodeMessage[code] })
+    }
+    return sendResponse({ type: 'Fail', message: error.message ?? 'Please check the back-end console' })
+  }
+}
+
+async function chatConfig() {
+  return sendResponse<ModelConfig>({
+    type: 'Success',
+    data: { 
+      apiModel, 
+      reverseProxy: '-', 
+      timeoutMs, 
+      socksProxy: '-', 
+      httpsProxy: '-', 
+      usage: '-' 
+    },
+  })
 }
 
 function currentModel(): ApiModel {
   return apiModel
 }
 
-export type { ChatContext, ChatMessage }
-
+export type { ChatContext }
 export { chatReplyProcess, chatConfig, currentModel }
