@@ -33,7 +33,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
   res.setHeader('Content-type', 'application/octet-stream')
 
   try {
-    const { prompt, options = {}, systemMessage, temperature, top_p, gpt_model, images, conversationHistory, tools, tool_choice } = req.body as RequestProps
+    const { prompt, options = {}, systemMessage, temperature, top_p, gpt_model, images, files, conversationHistory, tools, tool_choice } = req.body as RequestProps
     let firstChunk = true
     await chatReplyProcess({
       message: prompt,
@@ -47,6 +47,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
       top_p,
       gpt_model,
       images,
+      files,
       conversationHistory,
       tools,
       tool_choice,
@@ -193,8 +194,8 @@ router.delete('/conversations/:uuid', jwtAuth, async (req: any, res) => {
 router.post('/conversations/:uuid/messages', jwtAuth, async (req: any, res) => {
   try {
     const { uuid } = req.params
-    const { role, content, images, thinking } = req.body
-    db.addMessage(uuid, req.user.userId, role, content, images, thinking)
+    const { role, content, images, files, thinking } = req.body
+    db.addMessage(uuid, req.user.userId, role, content, images, files, thinking)
     res.send({ status: 'Success' })
   }
   catch (error) {

@@ -42,16 +42,26 @@ const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
 const gpt_model = ref(useSettingStore().gpt_model ?? 'gemini-3-flash-preview')
 
-// 图片上传相关
+// 文件上传相关
 const uploadedImages = ref<string[]>([])
-const imageInputRef = ref<HTMLInputElement | null>(null)
+const uploadedFiles = ref<{ name: string; type: string; data: string }[]>([])
+const fileInputRef = ref<HTMLInputElement | null>(null)
 const previewImage = ref<string | null>(null)
 const MAX_IMAGES = 4
-const MAX_IMAGE_SIZE = 1024 // 压缩后最大宽高
+const MAX_FILES = 4
+const MAX_IMAGE_SIZE = 1024
+const MAX_FILE_SIZE = 20 * 1024 * 1024
 
-// 触发图片上传
-function triggerImageUpload() {
-  imageInputRef.value?.click()
+// 支持的文件类型
+const SUPPORTED_FILE_TYPES = [
+  'application/pdf',
+  'text/plain', 'text/csv', 'text/html', 'text/css', 'text/javascript',
+  'application/json', 'application/xml',
+]
+
+// 触发文件上传
+function triggerFileUpload() {
+  fileInputRef.value?.click()
 }
 
 // 压缩图片
@@ -89,32 +99,74 @@ function compressImage(file: File): Promise<string> {
   })
 }
 
-// 处理图片上传
-async function handleImageUpload(event: Event) {
+// 处理文件上传（图片+文档）
+async function handleFileUpload(event: Event) {
   const input = event.target as HTMLInputElement
   const files = input.files
   if (!files) return
   
   for (const file of Array.from(files)) {
-    if (uploadedImages.value.length >= MAX_IMAGES) {
-      ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
-      break
+    // 图片
+    if (file.type.startsWith('image/')) {
+      if (uploadedImages.value.length >= MAX_IMAGES) {
+        ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
+        continue
+      }
+      try {
+        const base64 = await compressImage(file)
+        uploadedImages.value.push(base64)
+      } catch {
+        ms.error('图片处理失败')
+      }
     }
-    if (!file.type.startsWith('image/')) continue
-    
-    try {
-      const base64 = await compressImage(file)
-      uploadedImages.value.push(base64)
-    } catch {
-      ms.error('图片处理失败')
+    // 文档（通过扩展名或MIME类型判断）
+    else {
+      const ext = file.name.split('.').pop()?.toLowerCase()
+      const isSupported = SUPPORTED_FILE_TYPES.includes(file.type) 
+        || file.type.startsWith('text/') 
+        || ['pdf', 'txt', 'csv', 'json', 'xml', 'html', 'css', 'js'].includes(ext || '')
+      
+      if (!isSupported) {
+        ms.warning(`不支持的文件类型: ${file.name}`)
+        continue
+      }
+      if (uploadedFiles.value.length >= MAX_FILES) {
+        ms.warning(`最多上传 ${MAX_FILES} 个文件`)
+        continue
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        ms.warning(`文件 ${file.name} 超过 20MB 限制`)
+        continue
+      }
+      try {
+        const base64 = await fileToBase64(file)
+        uploadedFiles.value.push({ name: file.name, type: file.type || `text/${ext}`, data: base64 })
+      } catch {
+        ms.error('文件处理失败')
+      }
     }
   }
   input.value = ''
 }
 
+// 文件转 base64
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 // 删除图片
 function removeImage(index: number) {
   uploadedImages.value.splice(index, 1)
+}
+
+// 删除文件
+function removeFile(index: number) {
+  uploadedFiles.value.splice(index, 1)
 }
 
 // 拖拽上传
@@ -127,17 +179,30 @@ function handleDrop(event: DragEvent) {
   if (!files) return
   
   for (const file of Array.from(files)) {
-    if (uploadedImages.value.length >= MAX_IMAGES) {
-      ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
-      break
+    // 图片
+    if (file.type.startsWith('image/')) {
+      if (uploadedImages.value.length >= MAX_IMAGES) {
+        ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
+        continue
+      }
+      compressImage(file).then(base64 => {
+        uploadedImages.value.push(base64)
+      }).catch(() => ms.error('图片处理失败'))
     }
-    if (!file.type.startsWith('image/')) continue
-    
-    compressImage(file).then(base64 => {
-      uploadedImages.value.push(base64)
-    }).catch(() => {
-      ms.error('图片处理失败')
-    })
+    // 其他文件
+    else if (SUPPORTED_FILE_TYPES.includes(file.type) || file.type.startsWith('text/')) {
+      if (uploadedFiles.value.length >= MAX_FILES) {
+        ms.warning(`最多上传 ${MAX_FILES} 个文件`)
+        continue
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        ms.warning(`文件 ${file.name} 超过 20MB 限制`)
+        continue
+      }
+      fileToBase64(file).then(base64 => {
+        uploadedFiles.value.push({ name: file.name, type: file.type, data: base64 })
+      }).catch(() => ms.error('文件处理失败'))
+    }
   }
 }
 
@@ -203,15 +268,18 @@ async function onConversation() {
 
   controller = new AbortController()
 
-  const currentImages = [...uploadedImages.value] // 保存当前图片
-  uploadedImages.value = [] // 清空图片
+  const currentImages = [...uploadedImages.value]
+  const currentFiles = [...uploadedFiles.value]
+  uploadedImages.value = []
+  uploadedFiles.value = []
 
   addChat(
     currentUuid.value,
     {
       dateTime: new Date().toLocaleString(),
       text: message,
-      images: currentImages, // 保存图片到用户消息
+      images: currentImages,
+      files: currentFiles,
       inversion: true,
       error: false,
       conversationOptions: null,
@@ -258,7 +326,8 @@ async function onConversation() {
         prompt: message,
         options,
         conversationHistory,
-        images: currentImages, // 传入图片
+        images: currentImages,
+        files: currentFiles,
         signal: controller.signal,
         onDownloadProgress: ({ event }) => {
           const xhr = event.target
@@ -690,6 +759,7 @@ onUnmounted(() => {
                 v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
                 :thinking="item.thinking"
                 :images="item.images"
+                :files="item.files"
                 :inversion="item.inversion" :error="item.error" :loading="item.loading" @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />
@@ -724,19 +794,19 @@ onUnmounted(() => {
               <SvgIcon icon="ri:chat-history-line" />
             </span>
           </HoverButton>
-          <!-- 图片上传按钮 -->
-          <HoverButton @click="triggerImageUpload">
+          <!-- 文件上传按钮（图片+文档） -->
+          <HoverButton @click="triggerFileUpload">
             <span class="text-xl text-[#4f555e] dark:text-white">
-              <SvgIcon icon="ri:image-add-line" />
+              <SvgIcon icon="ri:attachment-2" />
             </span>
           </HoverButton>
           <input
-            ref="imageInputRef"
+            ref="fileInputRef"
             type="file"
-            accept="image/*"
+            accept="image/*,.pdf,.txt,.csv,.json,.xml,.html,.css,.js"
             multiple
             style="display: none;"
-            @change="handleImageUpload"
+            @change="handleFileUpload"
           />
           <button style="min-width: 60px; max-width: 60px; text-align: center; color: #4b9e5f;" @click="handleModelChange" v-text="gptModelText" />
           <!-- 图片预览区域 -->
@@ -746,6 +816,16 @@ onUnmounted(() => {
               <button 
                 class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs"
                 @click="removeImage(idx)"
+              >×</button>
+            </div>
+          </div>
+          <!-- 文件预览区域 -->
+          <div v-if="uploadedFiles.length" class="flex gap-1 items-center">
+            <div v-for="(file, idx) in uploadedFiles" :key="idx" class="relative px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
+              <span class="max-w-[80px] truncate inline-block align-middle">{{ file.name }}</span>
+              <button 
+                class="ml-1 text-red-500"
+                @click="removeFile(idx)"
               >×</button>
             </div>
           </div>

@@ -27,6 +27,7 @@ db.exec(`
     role TEXT NOT NULL,
     content TEXT,
     images TEXT,
+    files TEXT,
     thinking TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (conversation_uuid) REFERENCES conversations(uuid)
@@ -98,18 +99,18 @@ export const deleteConversation = (uuid: string, userId: number) => {
 }
 
 // 消息操作
-export interface Message { id: number; conversation_uuid: string; role: string; content: string; images?: string; thinking?: string; created_at: string }
+export interface Message { id: number; conversation_uuid: string; role: string; content: string; images?: string; files?: string; thinking?: string; created_at: string }
 
 export const getMessages = (uuid: string, userId: number) => {
   if (!getConversation(uuid, userId)) return []
   return db.prepare('SELECT * FROM messages WHERE conversation_uuid = ? ORDER BY created_at').all(uuid) as Message[]
 }
 
-export const addMessage = (uuid: string, userId: number, role: string, content: string, images?: string[], thinking?: string) => {
+export const addMessage = (uuid: string, userId: number, role: string, content: string, images?: string[], files?: any[], thinking?: string) => {
   if (!getConversation(uuid, userId))
     createConversation(uuid, userId)
-  db.prepare('INSERT INTO messages (conversation_uuid, role, content, images, thinking) VALUES (?, ?, ?, ?, ?)')
-    .run(uuid, role, content, images ? JSON.stringify(images) : null, thinking || null)
+  db.prepare('INSERT INTO messages (conversation_uuid, role, content, images, files, thinking) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(uuid, role, content, images ? JSON.stringify(images) : null, files ? JSON.stringify(files) : null, thinking || null)
   db.prepare('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE uuid = ?').run(uuid)
 }
 

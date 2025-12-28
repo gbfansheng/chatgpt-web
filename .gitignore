@@ -33,3 +33,6 @@ coverage
 
 # Database
 /service/data/
+
+# Database
+service/data/

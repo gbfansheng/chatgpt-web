@@ -9,11 +9,18 @@ import { t } from '@/locales'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { copyToClip } from '@/utils/copy'
 
+interface ChatFile {
+  name: string
+  type: string
+  data: string
+}
+
 interface Props {
   dateTime?: string
   text?: string
   thinking?: string
   images?: string[]
+  files?: ChatFile[]
   inversion?: boolean
   error?: boolean
   loading?: boolean
@@ -35,6 +42,26 @@ const { isMobile } = useBasicLayout()
 const { iconRender } = useIconRender()
 
 const message = useMessage()
+
+// 获取文件图标
+function getFileIcon(type: string) {
+  if (type.includes('pdf')) return '📄'
+  return '📎'
+}
+
+// 打开文件预览
+function openFilePreview(file: ChatFile) {
+  const win = window.open()
+  if (win) {
+    if (file.type.includes('pdf')) {
+      win.document.write(`<iframe src="${file.data}" style="width:100%;height:100%;border:none;"></iframe>`)
+    } else {
+      // 文本文件解码显示
+      const content = atob(file.data.split(',')[1])
+      win.document.write(`<pre style="white-space:pre-wrap;padding:20px;">${content}</pre>`)
+    }
+  }
+}
 
 const textRef = ref<HTMLElement>()
 
@@ -115,6 +142,18 @@ async function handleCopy() {
       <!-- 图片显示在气泡上方 -->
       <div v-if="images?.length" class="flex gap-1 mt-1 mb-1" :class="[inversion ? 'justify-end' : 'justify-start']">
         <img v-for="(img, idx) in images" :key="idx" :src="img" style="max-width:100px;max-height:100px;object-fit:contain" class="rounded cursor-pointer" @click="previewImage = img" />
+      </div>
+      <!-- 文件显示 -->
+      <div v-if="files?.length" class="flex flex-wrap gap-1 mt-1 mb-1" :class="[inversion ? 'justify-end' : 'justify-start']">
+        <div 
+          v-for="(file, idx) in files" 
+          :key="idx" 
+          class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+          @click="openFilePreview(file)"
+        >
+          <span>{{ getFileIcon(file.type) }}</span>
+          <span class="ml-1 max-w-[100px] truncate inline-block align-middle">{{ file.name }}</span>
+        </div>
       </div>
       <div
         class="flex items-end gap-1 mt-2"

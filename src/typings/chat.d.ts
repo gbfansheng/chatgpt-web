@@ -1,10 +1,17 @@
 declare namespace Chat {
 
+	interface ChatFile {
+		name: string
+		type: string
+		data: string
+	}
+
 	interface Chat {
 		dateTime: string
 		text: string
 		thinking?: string
 		images?: string[]
+		files?: ChatFile[]
 		inversion?: boolean
 		error?: boolean
 		loading?: boolean

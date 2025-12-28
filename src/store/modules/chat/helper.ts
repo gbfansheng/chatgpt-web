@@ -18,5 +18,13 @@ export function getLocalState(): Chat.ChatState {
 }
 
 export function setLocalState(state: Chat.ChatState) {
-  ss.set(LOCAL_NAME, state)
+  // 过滤掉 images/files 避免 localStorage 超限
+  const filtered = {
+    ...state,
+    chat: state.chat.map(c => ({
+      ...c,
+      data: c.data.map(m => ({ ...m, images: undefined, files: undefined })),
+    })),
+  }
+  ss.set(LOCAL_NAME, filtered)
 }

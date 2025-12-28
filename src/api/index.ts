@@ -26,6 +26,7 @@ export function fetchChatAPIProcess<T = any>(
     options?: { conversationId?: string; parentMessageId?: string }
     conversationHistory?: Array<{ text: string; inversion: boolean }>
     images?: string[]
+    files?: Array<{ name: string; type: string; data: string }>
     signal?: GenericAbortSignal
     onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void },
 ) {
@@ -36,6 +37,7 @@ export function fetchChatAPIProcess<T = any>(
     options: params.options,
     conversationHistory: params.conversationHistory,
     images: params.images,
+    files: params.files,
     systemMessage: settingStore.systemMessage,
     temperature: settingStore.temperature,
     top_p: settingStore.top_p,
@@ -84,8 +86,8 @@ export function deleteConversation<T = any>(uuid: string) {
   return post<T>({ url: `/conversations/${uuid}`, method: 'DELETE' })
 }
 
-export function saveMessage<T = any>(uuid: string, role: string, content: string, images?: string[], thinking?: string) {
-  return post<T>({ url: `/conversations/${uuid}/messages`, data: { role, content, images, thinking } })
+export function saveMessage<T = any>(uuid: string, role: string, content: string, images?: string[], files?: any[], thinking?: string) {
+  return post<T>({ url: `/conversations/${uuid}/messages`, data: { role, content, images, files, thinking } })
 }
 
 export function clearMessages<T = any>(uuid: string) {

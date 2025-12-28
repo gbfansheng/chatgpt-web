@@ -63,6 +63,7 @@ export const useChatStore = defineStore('chat-store', {
               text: m.content,
               thinking: m.thinking,
               images: m.images ? JSON.parse(m.images) : undefined,
+              files: m.files ? JSON.parse(m.files) : undefined,
               inversion: m.role === 'user',
               error: false,
               loading: false,
@@ -197,7 +198,7 @@ export const useChatStore = defineStore('chat-store', {
       
       // 只保存用户消息（有内容的），AI消息在完成后单独保存
       if (chat.inversion && chat.text)
-        saveMessage(String(targetUuid), 'user', chat.text, chat.images).catch(() => {})
+        saveMessage(String(targetUuid), 'user', chat.text, chat.images, chat.files).catch(() => {})
     },
 
     // 保存完成的AI回复到服务器

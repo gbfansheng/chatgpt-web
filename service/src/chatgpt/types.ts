@@ -9,6 +9,7 @@ export interface RequestOptions {
   top_p?: number
   gpt_model?: string
   images?: string[]
+  files?: Array<{ name: string; type: string; data: string }>
   conversationHistory?: Array<{ text: string; inversion: boolean }>
   tools?: any[]
   tool_choice?: any

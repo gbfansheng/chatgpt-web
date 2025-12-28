@@ -109,7 +109,8 @@ async function chatReplyProcess(options: RequestOptions) {
     top_p = 1, 
     gpt_model = 'gemini-3-flash-preview',
     images = [],
-    conversationHistory = [] // 需要传入完整对话历史
+    files = [],
+    conversationHistory = []
   } = options
   
   try {
@@ -119,13 +120,17 @@ async function chatReplyProcess(options: RequestOptions) {
     // 构建消息内容
     let content: string | Array<any> = message
     
-    // 如果有图片，构建多模态内容
-    if (images && images.length > 0) {
+    // 如果有图片或文件，构建多模态内容
+    if ((images && images.length > 0) || (files && files.length > 0)) {
       content = [
         { type: 'text', text: message },
         ...images.map(img => ({
           type: 'image_url',
           image_url: { url: img }
+        })),
+        ...files.map(file => ({
+          type: 'image_url',
+          image_url: { url: file.data }
         }))
       ]
     }
