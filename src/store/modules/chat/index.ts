@@ -203,7 +203,7 @@ export const useChatStore = defineStore('chat-store', {
 
     // 保存完成的AI回复到服务器
     saveAssistantMessage(uuid: number, text: string, thinking?: string) {
-      saveMessage(String(uuid), 'assistant', text, undefined, thinking).catch(() => {})
+      saveMessage(String(uuid), 'assistant', text, undefined, undefined, thinking).catch(() => {})
     },
 
     updateChatByUuid(uuid: number, index: number, chat: Chat.Chat) {

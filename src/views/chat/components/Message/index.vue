@@ -152,7 +152,7 @@ async function handleCopy() {
       </div>
       <!-- 文件显示 -->
       <div v-if="files?.length" class="flex flex-wrap gap-1 mt-1 mb-1" :class="[inversion ? 'justify-end' : 'justify-start']">
-        <template v-for="(file, idx) in files" :key="idx">
+        <template v-for="file in files" :key="file.name">
           <!-- 音频文件显示播放器 -->
           <audio v-if="isAudio(file.type)" :src="file.data" controls class="h-8" />
           <!-- 其他文件 -->

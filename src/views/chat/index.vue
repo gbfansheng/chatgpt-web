@@ -384,7 +384,7 @@ async function onConversation() {
         .filter(item => !item.loading && !item.error)
         .map(item => ({
           text: item.text,
-          inversion: item.inversion
+          inversion: item.inversion ?? false
         }))
 
       await fetchChatAPIProcess<Chat.ConversationResponse>({
