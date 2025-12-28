@@ -25,6 +25,7 @@ export function fetchChatAPIProcess<T = any>(
     prompt: string
     options?: { conversationId?: string; parentMessageId?: string }
     conversationHistory?: Array<{ text: string; inversion: boolean }>
+    images?: string[]
     signal?: GenericAbortSignal
     onDownloadProgress?: (progressEvent: AxiosProgressEvent) => void },
 ) {
@@ -34,6 +35,7 @@ export function fetchChatAPIProcess<T = any>(
     prompt: params.prompt,
     options: params.options,
     conversationHistory: params.conversationHistory,
+    images: params.images,
     systemMessage: settingStore.systemMessage,
     temperature: settingStore.temperature,
     top_p: settingStore.top_p,

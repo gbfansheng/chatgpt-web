@@ -4,6 +4,7 @@ declare namespace Chat {
 		dateTime: string
 		text: string
 		thinking?: string
+		images?: string[]
 		inversion?: boolean
 		error?: boolean
 		loading?: boolean

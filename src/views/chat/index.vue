@@ -41,6 +41,140 @@ const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
 const gpt_model = ref(useSettingStore().gpt_model ?? 'gemini-3-flash-preview')
 
+// 图片上传相关
+const uploadedImages = ref<string[]>([])
+const imageInputRef = ref<HTMLInputElement | null>(null)
+const previewImage = ref<string | null>(null)
+const MAX_IMAGES = 4
+const MAX_IMAGE_SIZE = 1024 // 压缩后最大宽高
+
+// 触发图片上传
+function triggerImageUpload() {
+  imageInputRef.value?.click()
+}
+
+// 压缩图片
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let { width, height } = img
+        
+        // 等比缩放
+        if (width > MAX_IMAGE_SIZE || height > MAX_IMAGE_SIZE) {
+          if (width > height) {
+            height = (height / width) * MAX_IMAGE_SIZE
+            width = MAX_IMAGE_SIZE
+          } else {
+            width = (width / height) * MAX_IMAGE_SIZE
+            height = MAX_IMAGE_SIZE
+          }
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+      img.onerror = reject
+      img.src = e.target?.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+// 处理图片上传
+async function handleImageUpload(event: Event) {
+  const input = event.target as HTMLInputElement
+  const files = input.files
+  if (!files) return
+  
+  for (const file of Array.from(files)) {
+    if (uploadedImages.value.length >= MAX_IMAGES) {
+      ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
+      break
+    }
+    if (!file.type.startsWith('image/')) continue
+    
+    try {
+      const base64 = await compressImage(file)
+      uploadedImages.value.push(base64)
+    } catch {
+      ms.error('图片处理失败')
+    }
+  }
+  input.value = ''
+}
+
+// 删除图片
+function removeImage(index: number) {
+  uploadedImages.value.splice(index, 1)
+}
+
+// 拖拽上传
+const isDragging = ref(false)
+
+function handleDrop(event: DragEvent) {
+  event.preventDefault()
+  isDragging.value = false
+  const files = event.dataTransfer?.files
+  if (!files) return
+  
+  for (const file of Array.from(files)) {
+    if (uploadedImages.value.length >= MAX_IMAGES) {
+      ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
+      break
+    }
+    if (!file.type.startsWith('image/')) continue
+    
+    compressImage(file).then(base64 => {
+      uploadedImages.value.push(base64)
+    }).catch(() => {
+      ms.error('图片处理失败')
+    })
+  }
+}
+
+function handleDragOver(event: DragEvent) {
+  event.preventDefault()
+  isDragging.value = true
+}
+
+function handleDragLeave(event: DragEvent) {
+  event.preventDefault()
+  isDragging.value = false
+}
+
+// 粘贴图片
+async function handlePaste(event: ClipboardEvent) {
+  const items = event.clipboardData?.items
+  if (!items) return
+  
+  for (const item of Array.from(items)) {
+    if (!item.type.startsWith('image/')) continue
+    
+    const file = item.getAsFile()
+    if (!file) continue
+    
+    if (uploadedImages.value.length >= MAX_IMAGES) {
+      ms.warning(`最多上传 ${MAX_IMAGES} 张图片`)
+      break
+    }
+    
+    try {
+      const base64 = await compressImage(file)
+      uploadedImages.value.push(base64)
+    } catch {
+      ms.error('图片处理失败')
+    }
+  }
+}
+
 // 添加PromptStore
 const promptStore = usePromptStore()
 
@@ -68,11 +202,15 @@ async function onConversation() {
 
   controller = new AbortController()
 
+  const currentImages = [...uploadedImages.value] // 保存当前图片
+  uploadedImages.value = [] // 清空图片
+
   addChat(
     +uuid,
     {
       dateTime: new Date().toLocaleString(),
       text: message,
+      images: currentImages, // 保存图片到用户消息
       inversion: true,
       error: false,
       conversationOptions: null,
@@ -118,7 +256,8 @@ async function onConversation() {
       await fetchChatAPIProcess<Chat.ConversationResponse>({
         prompt: message,
         options,
-        conversationHistory, // 传入完整对话历史
+        conversationHistory,
+        images: currentImages, // 传入图片
         signal: controller.signal,
         onDownloadProgress: ({ event }) => {
           const xhr = event.target
@@ -495,16 +634,38 @@ onMounted(() => {
   scrollToBottom()
   if (inputRef.value && !isMobile.value)
     inputRef.value?.focus()
+  
+  // 监听粘贴事件
+  document.addEventListener('paste', handlePaste)
 })
 
 onUnmounted(() => {
   if (loading.value)
     controller.abort()
+  document.removeEventListener('paste', handlePaste)
 })
 </script>
 
 <template>
-  <div class="flex flex-col w-full h-full">
+  <div 
+    class="flex flex-col w-full h-full relative" 
+    :class="{ 'drag-active': isDragging }"
+    @drop="handleDrop" 
+    @dragover="handleDragOver"
+    @dragleave="handleDragLeave"
+  >
+    <!-- 拖拽提示遮罩 -->
+    <div v-if="isDragging" class="drag-overlay">
+      <div class="drag-hint">
+        <SvgIcon icon="ri:image-add-line" class="text-4xl mb-2" />
+        <span>释放以上传图片</span>
+      </div>
+    </div>
+    <!-- 图片预览弹窗 -->
+    <div v-if="previewImage" class="preview-overlay" @click="previewImage = null">
+      <img :src="previewImage" class="preview-image" @click.stop />
+      <button class="preview-close" @click="previewImage = null">×</button>
+    </div>
     <HeaderComponent v-if="isMobile" :using-context="usingContext" @export="handleExport" @handle-clear="handleClear" />
     <main class="flex-1 overflow-hidden">
       <div id="scrollRef" ref="scrollRef" class="h-full overflow-hidden overflow-y-auto">
@@ -523,6 +684,7 @@ onUnmounted(() => {
               <Message
                 v-for="(item, index) of dataSources" :key="index" :date-time="item.dateTime" :text="item.text"
                 :thinking="item.thinking"
+                :images="item.images"
                 :inversion="item.inversion" :error="item.error" :loading="item.loading" @regenerate="onRegenerate(index)"
                 @delete="handleDelete(index)"
               />
@@ -557,7 +719,31 @@ onUnmounted(() => {
               <SvgIcon icon="ri:chat-history-line" />
             </span>
           </HoverButton>
-          <button style="min-width: 60px; color: #4b9e5f;" @click="handleModelChange" v-text="gptModelText" />
+          <!-- 图片上传按钮 -->
+          <HoverButton @click="triggerImageUpload">
+            <span class="text-xl text-[#4f555e] dark:text-white">
+              <SvgIcon icon="ri:image-add-line" />
+            </span>
+          </HoverButton>
+          <input
+            ref="imageInputRef"
+            type="file"
+            accept="image/*"
+            multiple
+            style="display: none;"
+            @change="handleImageUpload"
+          />
+          <button style="min-width: 60px; max-width: 60px; text-align: center; color: #4b9e5f;" @click="handleModelChange" v-text="gptModelText" />
+          <!-- 图片预览区域 -->
+          <div v-if="uploadedImages.length" class="flex gap-1 items-center">
+            <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative" style="width:50px;height:50px">
+              <img :src="img" style="width:50px;height:50px;object-fit:contain" class="bg-gray-100 dark:bg-gray-700 rounded cursor-pointer" @click="previewImage = img" />
+              <button 
+                class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs"
+                @click="removeImage(idx)"
+              >×</button>
+            </div>
+          </div>
           <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
             <template #default="{ handleInput, handleBlur, handleFocus }">
               <NInput
@@ -579,3 +765,61 @@ onUnmounted(() => {
     </footer>
   </div>
 </template>
+
+<style scoped>
+.drag-active {
+  position: relative;
+}
+
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(75, 158, 95, 0.1);
+  border: 3px dashed #4b9e5f;
+  border-radius: 8px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.drag-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #4b9e5f;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.preview-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+}
+
+.preview-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+}
+</style>

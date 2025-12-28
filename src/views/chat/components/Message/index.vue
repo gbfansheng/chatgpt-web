@@ -13,6 +13,7 @@ interface Props {
   dateTime?: string
   text?: string
   thinking?: string
+  images?: string[]
   inversion?: boolean
   error?: boolean
   loading?: boolean
@@ -26,6 +27,8 @@ interface Emit {
 const props = defineProps<Props>()
 
 const emit = defineEmits<Emit>()
+
+const previewImage = ref<string | null>(null)
 
 const { isMobile } = useBasicLayout()
 
@@ -109,6 +112,10 @@ async function handleCopy() {
       <p class="text-xs text-[#b4bbc4]" :class="[inversion ? 'text-right' : 'text-left']">
         {{ dateTime }}
       </p>
+      <!-- 图片显示在气泡上方 -->
+      <div v-if="images?.length" class="flex gap-1 mt-1 mb-1" :class="[inversion ? 'justify-end' : 'justify-start']">
+        <img v-for="(img, idx) in images" :key="idx" :src="img" style="max-width:100px;max-height:100px;object-fit:contain" class="rounded cursor-pointer" @click="previewImage = img" />
+      </div>
       <div
         class="flex items-end gap-1 mt-2"
         :class="[inversion ? 'flex-row-reverse' : 'flex-row']"
@@ -143,5 +150,10 @@ async function handleCopy() {
         </div>
       </div>
     </div>
+  </div>
+  <!-- 图片预览弹窗 -->
+  <div v-if="previewImage" class="fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center" @click="previewImage = null">
+    <img :src="previewImage" style="max-width:90vw;max-height:90vh;object-fit:contain" @click.stop />
+    <button class="absolute top-5 right-5 w-10 h-10 bg-white/20 rounded-full text-white text-2xl" @click="previewImage = null">×</button>
   </div>
 </template>
