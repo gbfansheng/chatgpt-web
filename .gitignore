@@ -38,3 +38,4 @@ coverage
 service/data/
 service/package-lock.json
 service/package-lock.json
+/data

@@ -1,10 +1,64 @@
 import express from 'express'
+import fs from 'fs'
+import path from 'path'
+import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 import type { RequestProps } from './types'
 import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
 import * as db from './db'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const FILES_DIR = path.join(__dirname, '../data/files')
+if (!fs.existsSync(FILES_DIR)) fs.mkdirSync(FILES_DIR, { recursive: true })
+
+// 保存图片到磁盘
+function saveImageToDisk(dataUrl: string) {
+  const hash = crypto.createHash('md5').update(dataUrl).digest('hex')
+  const match = dataUrl.match(/^data:image\/(\w+);base64,/)
+  const ext = match ? `.${match[1]}` : '.png'
+  const filename = `${hash}${ext}`
+  const filepath = path.join(FILES_DIR, filename)
+  if (!fs.existsSync(filepath)) {
+    const base64Data = dataUrl.replace(/^data:[^;]+;base64,/, '')
+    fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'))
+  }
+  return filename
+}
+
+// 从磁盘加载图片
+function loadImageFromDisk(filename: string) {
+  const filepath = path.join(FILES_DIR, filename)
+  if (!fs.existsSync(filepath)) return null
+  const data = fs.readFileSync(filepath)
+  const ext = path.extname(filename).slice(1) || 'png'
+  return `data:image/${ext};base64,${data.toString('base64')}`
+}
+
+// 保存文件到磁盘，返回文件信息（不含 data）
+function saveFileToDisk(file: { name: string; type: string; data: string }) {
+  const hash = crypto.createHash('md5').update(file.data).digest('hex')
+  const ext = path.extname(file.name) || ''
+  const filename = `${hash}${ext}`
+  const filepath = path.join(FILES_DIR, filename)
+  if (!fs.existsSync(filepath)) {
+    const base64Data = file.data.replace(/^data:[^;]+;base64,/, '')
+    fs.writeFileSync(filepath, Buffer.from(base64Data, 'base64'))
+  }
+  return { name: file.name, type: file.type, path: filename }
+}
+
+// 从磁盘读取文件，返回完整 data
+function loadFileFromDisk(file: { name: string; type: string; path: string }) {
+  const filepath = path.join(FILES_DIR, file.path)
+  if (!fs.existsSync(filepath)) return null
+  const data = fs.readFileSync(filepath)
+  const base64 = `data:${file.type};base64,${data.toString('base64')}`
+  return { name: file.name, type: file.type, data: base64 }
+}
 
 const app = express()
 const router = express.Router()
@@ -149,7 +203,19 @@ router.get('/conversations/:uuid', jwtAuth, async (req: any, res) => {
   try {
     const { uuid } = req.params
     const conversation = db.getConversation(uuid, req.user.userId)
-    const messages = db.getMessages(uuid, req.user.userId)
+    const messages = db.getMessages(uuid, req.user.userId).map((msg: any) => {
+      // 从磁盘加载图片
+      if (msg.images) {
+        const images = JSON.parse(msg.images)
+        msg.images = JSON.stringify(images.map(loadImageFromDisk).filter(Boolean))
+      }
+      // 从磁盘加载文件
+      if (msg.files) {
+        const files = JSON.parse(msg.files)
+        msg.files = JSON.stringify(files.map(loadFileFromDisk).filter(Boolean))
+      }
+      return msg
+    })
     res.send({ status: 'Success', data: { conversation, messages } })
   }
   catch (error) {
@@ -195,7 +261,10 @@ router.post('/conversations/:uuid/messages', jwtAuth, async (req: any, res) => {
   try {
     const { uuid } = req.params
     const { role, content, images, files, thinking } = req.body
-    db.addMessage(uuid, req.user.userId, role, content, images, files, thinking)
+    // 图片和文件都保存到磁盘
+    const savedImages = images?.map(saveImageToDisk)
+    const savedFiles = files?.map(saveFileToDisk)
+    db.addMessage(uuid, req.user.userId, role, content, savedImages, savedFiles, thinking)
     res.send({ status: 'Success' })
   }
   catch (error) {
