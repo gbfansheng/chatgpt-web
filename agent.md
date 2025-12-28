@@ -10,7 +10,6 @@
 - ✅ 流式响应处理
 - ✅ 添加 Gemini 模型支持 (gemini-3-pro, gemini-3-flash-preview)
 - ✅ 添加 GPT-5.1 模型支持
-- ✅ 图片对话基础支持 (多模态消息结构)
 - ✅ 简化模型切换 (Qwen-Plus, Gemini-3-Pro, Gemini-3-Flash, GPT-5.1)
 - ✅ 设置 Gemini-3-Flash 为默认模型
 - ✅ 修复对话上下文管理 (conversationHistory)
@@ -22,36 +21,26 @@
   - 支持流式输出时实时显示思考过程
   - 折叠/展开组件，默认隐藏
   - 过滤未闭合标签避免显示原始标签
+- ✅ 图片上传功能
+  - 拖拽上传支持 (带视觉提示遮罩)
+  - 粘贴图片支持 (Ctrl+V)
+  - 图片压缩 (最大 1024px)
+  - 输入框图片预览 (50x50 缩略图)
+  - 点击缩略图全屏预览
+  - 消息列表图片显示 (气泡上方，最大 100x100)
+  - 消息列表图片点击预览
+  - Express body limit 增加到 50MB
+- ✅ 多模态对话支持
+  - 图片 base64 编码传输
+  - OpenAI 兼容的 image_url 格式
+  - 对话历史中保存图片
 
 ## 待完成
-- ❌ 前端图片上传组件
 - ❌ 聊天服务器存储 (数据库)
 
 ## 待实现功能
 
-### 1. 图片对话支持
-**前端**:
-- 文件上传组件（拖拽/点击上传）
-- 图片预览和删除
-- 消息中显示图片
-
-**后端**:
-- 图片 base64 编码处理
-- 多模态消息格式支持
-- 图片大小和格式验证
-
-### 2. Thinking 展示
-**前端**:
-- Thinking 内容折叠/展开组件
-- 实时 thinking 流式显示
-- 区分 thinking 和 response 内容
-
-**后端**:
-- 解析 thinking 标签 `<thinking>...</thinking>`
-- 分离 thinking 和最终回复
-- 流式传输时标记内容类型
-
-### 3. 聊天服务器存储
+### 聊天服务器存储
 **数据库设计**:
 ```sql
 conversations: id, title, created_at, updated_at
@@ -71,11 +60,6 @@ messages: id, conversation_id, role, content, images, thinking, created_at
 - **图片处理**: 内置 base64 处理
 - **实时通信**: Server-Sent Events (SSE)
 
-## 实现优先级
-1. 图片对话支持 (高)
-2. 聊天服务器存储 (高) 
-3. Thinking 展示 (中)
-
 ## 文件结构
 ```
 service/
@@ -85,3 +69,11 @@ service/
 │   ├── utils/        # 工具函数
 │   └── types/        # 类型定义
 ```
+
+## 关键文件
+- `service/src/chatgpt/index.ts` - 后端 API 调用
+- `src/views/chat/index.vue` - 主聊天界面、图片上传
+- `src/views/chat/components/Message/index.vue` - 消息组件、图片显示
+- `src/views/chat/components/Message/Text.vue` - Thinking 解析展示
+- `src/api/index.ts` - 前端 API 调用
+- `src/typings/chat.d.ts` - 类型定义 (含 images 字段)
