@@ -196,8 +196,8 @@ export const useChatStore = defineStore('chat-store', {
         }
       }
       
-      // 只保存用户消息（有内容的），AI消息在完成后单独保存
-      if (chat.inversion && chat.text)
+      // 只保存用户消息，AI消息在完成后单独保存
+      if (chat.inversion && (chat.text || chat.images?.length || chat.files?.length))
         saveMessage(String(targetUuid), 'user', chat.text, chat.images, chat.files).catch(() => {})
     },
 

@@ -46,11 +46,18 @@ const message = useMessage()
 // 获取文件图标
 function getFileIcon(type: string) {
   if (type.includes('pdf')) return '📄'
+  if (type.includes('audio')) return '🎵'
   return '📎'
+}
+
+// 判断是否为音频
+function isAudio(type: string) {
+  return type.startsWith('audio/')
 }
 
 // 打开文件预览
 function openFilePreview(file: ChatFile) {
+  if (isAudio(file.type)) return // 音频直接播放，不打开新窗口
   const win = window.open()
   if (win) {
     if (file.type.includes('pdf')) {
@@ -145,15 +152,19 @@ async function handleCopy() {
       </div>
       <!-- 文件显示 -->
       <div v-if="files?.length" class="flex flex-wrap gap-1 mt-1 mb-1" :class="[inversion ? 'justify-end' : 'justify-start']">
-        <div 
-          v-for="(file, idx) in files" 
-          :key="idx" 
-          class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
-          @click="openFilePreview(file)"
-        >
-          <span>{{ getFileIcon(file.type) }}</span>
-          <span class="ml-1 max-w-[100px] truncate inline-block align-middle">{{ file.name }}</span>
-        </div>
+        <template v-for="(file, idx) in files" :key="idx">
+          <!-- 音频文件显示播放器 -->
+          <audio v-if="isAudio(file.type)" :src="file.data" controls class="h-8" />
+          <!-- 其他文件 -->
+          <div 
+            v-else
+            class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600"
+            @click="openFilePreview(file)"
+          >
+            <span>{{ getFileIcon(file.type) }}</span>
+            <span class="ml-1 max-w-[100px] truncate inline-block align-middle">{{ file.name }}</span>
+          </div>
+        </template>
       </div>
       <div
         class="flex items-end gap-1 mt-2"

@@ -47,6 +47,12 @@ const uploadedImages = ref<string[]>([])
 const uploadedFiles = ref<{ name: string; type: string; data: string }[]>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const previewImage = ref<string | null>(null)
+
+// 录音相关
+const isRecording = ref(false)
+const mediaRecorder = ref<MediaRecorder | null>(null)
+const audioChunks = ref<Blob[]>([])
+
 const MAX_IMAGES = 4
 const MAX_FILES = 4
 const MAX_IMAGE_SIZE = 1024
@@ -99,7 +105,7 @@ function compressImage(file: File): Promise<string> {
   })
 }
 
-// 处理文件上传（图片+文档）
+// 处理文件上传（图片+文档+音频）
 async function handleFileUpload(event: Event) {
   const input = event.target as HTMLInputElement
   const files = input.files
@@ -117,6 +123,23 @@ async function handleFileUpload(event: Event) {
         uploadedImages.value.push(base64)
       } catch {
         ms.error('图片处理失败')
+      }
+    }
+    // 音频
+    else if (file.type.startsWith('audio/')) {
+      if (uploadedFiles.value.length >= MAX_FILES) {
+        ms.warning(`最多上传 ${MAX_FILES} 个文件`)
+        continue
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        ms.warning(`文件 ${file.name} 超过 20MB 限制`)
+        continue
+      }
+      try {
+        const base64 = await fileToBase64(file)
+        uploadedFiles.value.push({ name: file.name, type: file.type, data: base64 })
+      } catch {
+        ms.error('音频处理失败')
       }
     }
     // 文档（通过扩展名或MIME类型判断）
@@ -257,13 +280,55 @@ function handleSubmit() {
   onConversation()
 }
 
+// 开始/停止录音
+async function toggleRecording() {
+  if (isRecording.value) {
+    // 停止录音
+    mediaRecorder.value?.stop()
+    isRecording.value = false
+  } else {
+    // 开始录音
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorder.value = new MediaRecorder(stream)
+      audioChunks.value = []
+      
+      mediaRecorder.value.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.value.push(e.data)
+      }
+      
+      mediaRecorder.value.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop())
+        const blob = new Blob(audioChunks.value, { type: 'audio/webm' })
+        const reader = new FileReader()
+        reader.onload = () => {
+          const base64 = reader.result as string
+          uploadedFiles.value.push({ name: `录音_${Date.now()}.webm`, type: 'audio/webm', data: base64 })
+        }
+        reader.readAsDataURL(blob)
+      }
+      
+      mediaRecorder.value.start()
+      isRecording.value = true
+    } catch (e: any) {
+      if (e.name === 'NotAllowedError')
+        ms.error('麦克风权限被拒绝')
+      else if (location.protocol !== 'https:' && location.hostname !== 'localhost')
+        ms.error('录音需要 HTTPS 环境')
+      else
+        ms.error('无法访问麦克风')
+    }
+  }
+}
+
 async function onConversation() {
   let message = prompt.value
 
   if (loading.value)
     return
 
-  if (!message || message.trim() === '')
+  const hasFiles = uploadedImages.value.length > 0 || uploadedFiles.value.length > 0
+  if ((!message || message.trim() === '') && !hasFiles)
     return
 
   controller = new AbortController()
@@ -694,7 +759,9 @@ const placeholder = computed(() => {
 })
 
 const buttonDisabled = computed(() => {
-  return loading.value || !prompt.value || prompt.value.trim() === ''
+  const hasContent = prompt.value && prompt.value.trim() !== ''
+  const hasFiles = uploadedImages.value.length > 0 || uploadedFiles.value.length > 0
+  return loading.value || (!hasContent && !hasFiles)
 })
 
 const footerClass = computed(() => {
@@ -800,10 +867,16 @@ onUnmounted(() => {
               <SvgIcon icon="ri:attachment-2" />
             </span>
           </HoverButton>
+          <!-- 录音按钮（仅桌面端） -->
+          <HoverButton v-if="!isMobile" @click="toggleRecording">
+            <span class="text-xl" :class="isRecording ? 'text-red-500 animate-pulse' : 'text-[#4f555e] dark:text-white'">
+              <SvgIcon :icon="isRecording ? 'ri:stop-circle-fill' : 'ri:mic-line'" />
+            </span>
+          </HoverButton>
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/*,.pdf,.txt,.csv,.json,.xml,.html,.css,.js"
+            accept="image/*,audio/*,.pdf,.txt,.csv,.json,.xml,.html,.css,.js"
             multiple
             style="display: none;"
             @change="handleFileUpload"

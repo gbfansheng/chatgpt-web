@@ -33,10 +33,25 @@
 - ✅ 消息列表图片点击预览
 - ✅ Express body limit 增加到 50MB
 
+### 文件上传
+- ✅ 支持文档上传 (PDF, TXT, CSV, JSON, XML, HTML, CSS, JS)
+- ✅ 支持音频上传 (MP3, WAV, OGG, WebM 等)
+- ✅ 文件大小限制 20MB
+- ✅ 文件预览 (PDF iframe, 文本解码显示)
+- ✅ 音频播放器显示
+
+### 录音功能
+- ✅ 桌面端录音按钮
+- ✅ 录制为 WebM 格式
+- ✅ 录音状态指示 (红色闪烁)
+- ✅ 录音完成自动添加到文件列表
+
 ### 多模态对话
 - ✅ 图片 base64 编码传输
+- ✅ 音频 base64 编码传输
 - ✅ OpenAI 兼容的 image_url 格式
-- ✅ 对话历史中保存图片
+- ✅ 对话历史中保存图片和文件
+- ✅ 无文字时有文件也可发送
 
 ### 用户认证系统
 - ✅ 用户注册/登录 (用户名 + 密码)
@@ -50,9 +65,10 @@
 - ✅ SQLite 数据库存储
 - ✅ 用户数据隔离 (按 user_id)
 - ✅ 对话列表同步
-- ✅ 消息历史同步
+- ✅ 消息历史同步 (含图片、文件)
 - ✅ 登录后自动加载服务器数据
 - ✅ 退出时清除本地数据
+- ✅ localStorage 过滤大文件避免超限
 
 ## 技术架构
 
@@ -60,7 +76,7 @@
 ```sql
 users: id, username, password_hash, created_at
 conversations: id, uuid, user_id, title, created_at, updated_at
-messages: id, conversation_uuid, role, content, images, thinking, created_at
+messages: id, conversation_uuid, role, content, images, files, thinking, created_at
 ```
 
 ### API 端点
