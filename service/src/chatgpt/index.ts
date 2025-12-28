@@ -1,6 +1,6 @@
 import * as dotenv from 'dotenv'
-import { SocksProxyAgent } from 'socks-proxy-agent'
-import { HttpsProxyAgent } from 'https-proxy-agent'
+import SocksProxyAgent from 'socks-proxy-agent'
+import HttpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
 import { sendResponse } from '../utils'
 import { isNotEmptyString } from '../utils/is'
