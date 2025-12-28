@@ -33,7 +33,8 @@ const { usingContext, toggleUsingContext } = useUsingContext()
 
 const { uuid } = route.params as { uuid: string }
 
-const dataSources = computed(() => chatStore.getChatByUuid(+uuid))
+const currentUuid = computed(() => chatStore.active || +uuid)
+const dataSources = computed(() => chatStore.getChatByUuid(currentUuid.value))
 const conversationList = computed(() => dataSources.value.filter(item => (!item.inversion && !!item.conversationOptions)))
 
 const prompt = ref<string>('')
@@ -184,7 +185,7 @@ const { promptList: promptTemplate } = storeToRefs<any>(promptStore)
 // 未知原因刷新页面，loading 状态不会重置，手动重置
 dataSources.value.forEach((item, index) => {
   if (item.loading)
-    updateChatSome(+uuid, index, { loading: false })
+    updateChatSome(currentUuid.value, index, { loading: false })
 })
 
 function handleSubmit() {
@@ -206,7 +207,7 @@ async function onConversation() {
   uploadedImages.value = [] // 清空图片
 
   addChat(
-    +uuid,
+    currentUuid.value,
     {
       dateTime: new Date().toLocaleString(),
       text: message,
@@ -229,7 +230,7 @@ async function onConversation() {
     options = { ...lastContext }
 
   addChat(
-    +uuid,
+    currentUuid.value,
     {
       dateTime: new Date().toLocaleString(),
       text: '',
@@ -270,7 +271,7 @@ async function onConversation() {
           try {
             const data = JSON.parse(chunk)
             updateChat(
-              +uuid,
+              currentUuid.value,
               dataSources.value.length - 1,
               {
                 dateTime: new Date().toLocaleString(),
@@ -298,7 +299,11 @@ async function onConversation() {
           }
         },
       })
-      updateChatSome(+uuid, dataSources.value.length - 1, { loading: false })
+      updateChatSome(currentUuid.value, dataSources.value.length - 1, { loading: false })
+      // 保存AI回复到服务器
+      const lastMsg = dataSources.value[dataSources.value.length - 1]
+      if (lastMsg && !lastMsg.inversion && lastMsg.text)
+        chatStore.saveAssistantMessage(currentUuid.value, lastMsg.text, lastMsg.thinking)
     }
 
     await fetchChatAPIOnce()
@@ -308,7 +313,7 @@ async function onConversation() {
 
     if (error.message === 'canceled') {
       updateChatSome(
-        +uuid,
+        currentUuid.value,
         dataSources.value.length - 1,
         {
           loading: false,
@@ -318,11 +323,11 @@ async function onConversation() {
       return
     }
 
-    const currentChat = getChatByUuidAndIndex(+uuid, dataSources.value.length - 1)
+    const currentChat = getChatByUuidAndIndex(currentUuid.value, dataSources.value.length - 1)
 
     if (currentChat?.text && currentChat.text !== '') {
       updateChatSome(
-        +uuid,
+        currentUuid.value,
         dataSources.value.length - 1,
         {
           text: `${currentChat.text}\n[${errorMessage}]`,
@@ -334,7 +339,7 @@ async function onConversation() {
     }
 
     updateChat(
-      +uuid,
+      currentUuid.value,
       dataSources.value.length - 1,
       {
         dateTime: new Date().toLocaleString(),
@@ -371,7 +376,7 @@ async function onRegenerate(index: number) {
   loading.value = true
 
   updateChat(
-    +uuid,
+    currentUuid.value,
     index,
     {
       dateTime: new Date().toLocaleString(),
@@ -402,7 +407,7 @@ async function onRegenerate(index: number) {
           try {
             const data = JSON.parse(chunk)
             updateChat(
-              +uuid,
+              currentUuid.value,
               index,
               {
                 dateTime: new Date().toLocaleString(),
@@ -428,14 +433,14 @@ async function onRegenerate(index: number) {
           }
         },
       })
-      updateChatSome(+uuid, index, { loading: false })
+      updateChatSome(currentUuid.value, index, { loading: false })
     }
     await fetchChatAPIOnce()
   }
   catch (error: any) {
     if (error.message === 'canceled') {
       updateChatSome(
-        +uuid,
+        currentUuid.value,
         index,
         {
           loading: false,
@@ -447,7 +452,7 @@ async function onRegenerate(index: number) {
     const errorMessage = error?.message ?? t('common.wrong')
 
     updateChat(
-      +uuid,
+      currentUuid.value,
       index,
       {
         dateTime: new Date().toLocaleString(),
@@ -545,7 +550,7 @@ function handleDelete(index: number) {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.deleteChatByUuid(+uuid, index)
+      chatStore.deleteChatByUuid(currentUuid.value, index)
     },
   })
 }
@@ -560,7 +565,7 @@ function handleClear() {
     positiveText: t('common.yes'),
     negativeText: t('common.no'),
     onPositiveClick: () => {
-      chatStore.clearChatByUuid(+uuid)
+      chatStore.clearChatByUuid(currentUuid.value)
     },
   })
 }

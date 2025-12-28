@@ -62,3 +62,45 @@ export function fetchVerify<T>(token: string) {
     data: { token },
   })
 }
+
+// 聊天记录 API
+export function fetchConversations<T = any>() {
+  return post<T>({ url: '/conversations', method: 'GET' })
+}
+
+export function fetchConversation<T = any>(uuid: string) {
+  return post<T>({ url: `/conversations/${uuid}`, method: 'GET' })
+}
+
+export function createConversation<T = any>(uuid: string, title?: string) {
+  return post<T>({ url: '/conversations', data: { uuid, title } })
+}
+
+export function updateConversation<T = any>(uuid: string, title: string) {
+  return post<T>({ url: `/conversations/${uuid}`, data: { title }, method: 'PUT' })
+}
+
+export function deleteConversation<T = any>(uuid: string) {
+  return post<T>({ url: `/conversations/${uuid}`, method: 'DELETE' })
+}
+
+export function saveMessage<T = any>(uuid: string, role: string, content: string, images?: string[], thinking?: string) {
+  return post<T>({ url: `/conversations/${uuid}/messages`, data: { role, content, images, thinking } })
+}
+
+export function clearMessages<T = any>(uuid: string) {
+  return post<T>({ url: `/conversations/${uuid}/messages`, method: 'DELETE' })
+}
+
+// 用户认证 API
+export function userRegister<T = any>(username: string, password: string, inviteCode: string) {
+  return post<T>({ url: '/user/register', data: { username, password, inviteCode } })
+}
+
+export function userLogin<T = any>(username: string, password: string) {
+  return post<T>({ url: '/user/login', data: { username, password } })
+}
+
+export function getUserInfo<T = any>() {
+  return post<T>({ url: '/user/info', method: 'GET' })
+}

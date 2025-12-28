@@ -1,9 +1,9 @@
 <script setup lang='ts'>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { NLayout, NLayoutContent } from 'naive-ui'
 import { useRouter } from 'vue-router'
 import Sider from './sider/index.vue'
-import Permission from './Permission.vue'
+import Login from './Login.vue'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useAppStore, useAuthStore, useChatStore } from '@/store'
 
@@ -14,11 +14,18 @@ const authStore = useAuthStore()
 
 router.replace({ name: 'Chat', params: { uuid: chatStore.active } })
 
+// 初始化时检查登录状态并加载数据
+onMounted(async () => {
+  await authStore.checkAuth()
+  if (authStore.isLoggedIn)
+    chatStore.loadFromServer()
+})
+
 const { isMobile } = useBasicLayout()
 
 const collapsed = computed(() => appStore.siderCollapsed)
 
-const needPermission = computed(() => !!authStore.session?.auth && !authStore.token)
+const needLogin = computed(() => !authStore.isLoggedIn)
 
 const getMobileClass = computed(() => {
   if (isMobile.value)
@@ -46,6 +53,6 @@ const getContainerClass = computed(() => {
         </NLayoutContent>
       </NLayout>
     </div>
-    <Permission :visible="needPermission" />
+    <Login :visible="needLogin" />
   </div>
 </template>

@@ -48,9 +48,13 @@ function http<T = any>(
 
   const params = Object.assign(typeof data === 'function' ? data() : data ?? {}, {})
 
-  return method === 'GET'
-    ? request.get(url, { params, signal, onDownloadProgress }).then(successHandler, failHandler)
-    : request.post(url, params, { headers, signal, onDownloadProgress }).then(successHandler, failHandler)
+  if (method === 'GET')
+    return request.get(url, { params, signal, onDownloadProgress }).then(successHandler, failHandler)
+  if (method === 'DELETE')
+    return request.delete(url, { params, signal }).then(successHandler, failHandler)
+  if (method === 'PUT')
+    return request.put(url, params, { headers, signal }).then(successHandler, failHandler)
+  return request.post(url, params, { headers, signal, onDownloadProgress }).then(successHandler, failHandler)
 }
 
 export function get<T = any>(
@@ -68,11 +72,11 @@ export function get<T = any>(
 }
 
 export function post<T = any>(
-  { url, data, method = 'POST', headers, onDownloadProgress, signal, beforeRequest, afterRequest }: HttpOption,
+  { url, data, method, headers, onDownloadProgress, signal, beforeRequest, afterRequest }: HttpOption,
 ): Promise<Response<T>> {
   return http<T>({
     url,
-    method,
+    method: method || 'POST',
     data,
     headers,
     onDownloadProgress,
