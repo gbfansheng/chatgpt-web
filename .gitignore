@@ -37,3 +37,4 @@ coverage
 # Database
 service/data/
 service/package-lock.json
+service/package-lock.json

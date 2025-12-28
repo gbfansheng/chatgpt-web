@@ -218,4 +218,10 @@ app.use('', router)
 app.use('/api', router)
 app.set('trust proxy', 1)
 
-app.listen(3002, () => globalThis.console.log('Server is running on port 3002'))
+// 异步启动，等待数据库初始化
+db.initDb().then(() => {
+  app.listen(3002, () => globalThis.console.log('Server is running on port 3002'))
+}).catch(err => {
+  console.error('Failed to initialize database:', err)
+  process.exit(1)
+})
