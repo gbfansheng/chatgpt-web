@@ -4,7 +4,10 @@ import { router } from '@/router'
 import { createConversation, deleteConversation, fetchConversation, fetchConversations, saveMessage, updateConversation } from '@/api'
 
 export const useChatStore = defineStore('chat-store', {
-  state: (): Chat.ChatState => getLocalState(),
+  state: (): Chat.ChatState => ({
+    ...getLocalState(),
+    loadingMessages: false,
+  }),
 
   getters: {
     getChatHistoryByCurrentActive(state: Chat.ChatState) {
@@ -53,6 +56,7 @@ export const useChatStore = defineStore('chat-store', {
 
     // 从服务器加载单个对话的消息
     async loadMessagesFromServer(uuid: number) {
+      this.loadingMessages = true
       try {
         const res = await fetchConversation(String(uuid))
         if (res.status === 'Success' && res.data?.messages?.length) {
@@ -74,6 +78,9 @@ export const useChatStore = defineStore('chat-store', {
       }
       catch (e) {
         console.error('Load messages failed:', e)
+      }
+      finally {
+        this.loadingMessages = false
       }
     },
 
