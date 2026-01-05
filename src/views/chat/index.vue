@@ -850,6 +850,17 @@ onUnmounted(() => {
     </main>
     <footer :class="footerClass">
       <div class="w-full max-w-screen-xl m-auto">
+        <!-- 图片/文件预览区域 - 显示在输入框上方，左对齐输入框 -->
+        <div v-if="uploadedImages.length || uploadedFiles.length" class="flex flex-wrap gap-2 mb-2 p-2 bg-gray-50 dark:bg-gray-800 rounded" style="margin-left: auto; max-width: calc(100% - 280px);">
+          <div v-for="(img, idx) in uploadedImages" :key="'img-'+idx" class="relative" style="width:60px;height:60px">
+            <img :src="img" style="width:60px;height:60px;object-fit:cover" class="rounded cursor-pointer" @click="previewImage = img" />
+            <button class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs" @click="removeImage(idx)">×</button>
+          </div>
+          <div v-for="(file, idx) in uploadedFiles" :key="'file-'+idx" class="relative flex items-center px-2 py-1 bg-white dark:bg-gray-700 rounded text-xs">
+            <span class="max-w-[100px] truncate">{{ file.name }}</span>
+            <button class="ml-1 text-red-500" @click="removeFile(idx)">×</button>
+          </div>
+        </div>
         <div class="flex items-center justify-between space-x-2">
           <HoverButton v-if="!isMobile" @click="handleClear">
             <span class="text-xl text-[#4f555e] dark:text-white">
@@ -887,26 +898,6 @@ onUnmounted(() => {
             @change="handleFileUpload"
           />
           <button style="min-width: 60px; max-width: 60px; text-align: center; color: #4b9e5f;" @click="handleModelChange" v-text="gptModelText" />
-          <!-- 图片预览区域 -->
-          <div v-if="uploadedImages.length" class="flex gap-1 items-center">
-            <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative" style="width:50px;height:50px">
-              <img :src="img" style="width:50px;height:50px;object-fit:contain" class="bg-gray-100 dark:bg-gray-700 rounded cursor-pointer" @click="previewImage = img" />
-              <button 
-                class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full text-xs"
-                @click="removeImage(idx)"
-              >×</button>
-            </div>
-          </div>
-          <!-- 文件预览区域 -->
-          <div v-if="uploadedFiles.length" class="flex gap-1 items-center">
-            <div v-for="(file, idx) in uploadedFiles" :key="idx" class="relative px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-xs">
-              <span class="max-w-[80px] truncate inline-block align-middle">{{ file.name }}</span>
-              <button 
-                class="ml-1 text-red-500"
-                @click="removeFile(idx)"
-              >×</button>
-            </div>
-          </div>
           <NAutoComplete v-model:value="prompt" :options="searchOptions" :render-label="renderOption">
             <template #default="{ handleInput, handleBlur, handleFocus }">
               <NInput
