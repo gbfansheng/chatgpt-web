@@ -1,4 +1,6 @@
 import * as dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import SocksProxyAgent from 'socks-proxy-agent'
 import HttpsProxyAgent from 'https-proxy-agent'
 import fetch from 'node-fetch'
@@ -7,7 +9,12 @@ import { isNotEmptyString } from '../utils/is'
 import type { ApiModel, ChatContext, ModelConfig } from '../types'
 import type { RequestOptions } from './types'
 
-dotenv.config()
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// 先加载 service/.env，再回退读取项目根目录 .env，方便前后端共用默认模型配置。
+dotenv.config({ path: path.resolve(__dirname, '../.env') })
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 
 const ErrorCodeMessage: Record<string, string> = {
   401: '[API] 提供错误的API密钥 | Incorrect API key provided',
@@ -30,6 +37,19 @@ const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
 const QWEN_API_KEY = process.env.QWEN_API_KEY
 const TUZI_API_BASE_URL = process.env.TUZI_API_BASE_URL || 'https://api.tu-zi.com'
 const TUZI_API_KEY = process.env.TUZI_API_KEY
+const DEFAULT_GPT_MODEL = process.env.VITE_DEFAULT_GPT_MODEL || process.env.OPENAI_API_MODEL || 'gemini-3-flash-preview'
+const DEFAULT_AVAILABLE_GPT_MODELS = ['qwen-plus', 'gemini-3-pro', 'gemini-3-flash-preview', 'gpt-5.1']
+const AVAILABLE_GPT_MODELS = (process.env.VITE_AVAILABLE_GPT_MODELS || '')
+  .split(',')
+  .map(item => item.trim())
+  .filter(Boolean)
+
+function getAvailableGptModels() {
+  const models = AVAILABLE_GPT_MODELS.length > 0 ? AVAILABLE_GPT_MODELS : DEFAULT_AVAILABLE_GPT_MODELS
+  if (models.includes(DEFAULT_GPT_MODEL))
+    return models
+  return [DEFAULT_GPT_MODEL, ...models]
+}
 
 let apiModel: ApiModel = 'ChatGPTAPI'
 
@@ -107,14 +127,15 @@ async function chatReplyProcess(options: RequestOptions) {
     systemMessage, 
     temperature = 0.8, 
     top_p = 1, 
-    gpt_model = 'gemini-3-flash-preview',
+    gpt_model,
     images = [],
     files = [],
     conversationHistory = []
   } = options
   
   try {
-    const config = getAPIConfig(gpt_model)
+    const currentGptModel = isNotEmptyString(gpt_model) ? gpt_model : DEFAULT_GPT_MODEL
+    const config = getAPIConfig(currentGptModel)
     const agent = setupProxy()
     
     // 构建消息内容
@@ -158,7 +179,7 @@ async function chatReplyProcess(options: RequestOptions) {
     // ... 其余代码保持不变
     
     const requestBody = {
-      model: gpt_model,
+      model: currentGptModel,
       messages,
       temperature,
       top_p,
@@ -250,6 +271,8 @@ async function chatConfig() {
     type: 'Success',
     data: { 
       apiModel, 
+      defaultGptModel: DEFAULT_GPT_MODEL,
+      availableGptModels: getAvailableGptModels(),
       reverseProxy: '-', 
       timeoutMs, 
       socksProxy: '-', 
@@ -263,5 +286,13 @@ function currentModel(): ApiModel {
   return apiModel
 }
 
+function defaultGptModel() {
+  return DEFAULT_GPT_MODEL
+}
+
+function availableGptModels() {
+  return getAvailableGptModels()
+}
+
 export type { ChatContext }
-export { chatReplyProcess, chatConfig, currentModel }
+export { chatReplyProcess, chatConfig, currentModel, defaultGptModel, availableGptModels }

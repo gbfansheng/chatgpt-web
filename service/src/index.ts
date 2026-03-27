@@ -4,7 +4,7 @@ import path from 'path'
 import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import type { RequestProps } from './types'
-import { chatConfig, chatReplyProcess, currentModel } from './chatgpt'
+import { availableGptModels, chatConfig, chatReplyProcess, currentModel, defaultGptModel } from './chatgpt'
 import { auth } from './middleware/auth'
 import { limiter } from './middleware/limiter'
 import { isNotEmptyString } from './utils/is'
@@ -129,7 +129,7 @@ router.post('/session', async (req, res) => {
   try {
     const AUTH_SECRET_KEY = process.env.AUTH_SECRET_KEY
     const hasAuth = isNotEmptyString(AUTH_SECRET_KEY)
-    res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel() } })
+    res.send({ status: 'Success', message: '', data: { auth: hasAuth, model: currentModel(), defaultGptModel: defaultGptModel(), availableGptModels: availableGptModels() } })
   }
   catch (error) {
     res.send({ status: 'Fail', message: error.message, data: null })

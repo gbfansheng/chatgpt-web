@@ -6,6 +6,8 @@ import { fetchSession, getUserInfo, userLogin, userRegister } from '@/api'
 interface SessionResponse {
   auth: boolean
   model: 'ChatGPTAPI' | 'ChatGPTUnofficialProxyAPI'
+  defaultGptModel?: string
+  availableGptModels?: string[]
 }
 
 interface UserInfo {

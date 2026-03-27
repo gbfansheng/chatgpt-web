@@ -1,6 +1,6 @@
 <script setup lang='ts'>
 import type { Ref } from 'vue'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { NAutoComplete, NButton, NInput, useDialog, useMessage } from 'naive-ui'
@@ -13,6 +13,8 @@ import HeaderComponent from './components/Header/index.vue'
 import { HoverButton, SvgIcon } from '@/components/common'
 import { useBasicLayout } from '@/hooks/useBasicLayout'
 import { useChatStore, usePromptStore, useSettingStore } from '@/store'
+import { useAuthStore } from '@/store/modules/auth'
+import { DEFAULT_AVAILABLE_GPT_MODELS_FALLBACK, DEFAULT_GPT_MODEL_FALLBACK } from '@/store/modules/settings/helper'
 import { fetchChatAPIProcess } from '@/api'
 import { t } from '@/locales'
 
@@ -23,6 +25,7 @@ const openLongReply = import.meta.env.VITE_GLOB_OPEN_LONG_REPLY === 'true'
 const route = useRoute()
 const dialog = useDialog()
 const ms = useMessage()
+const authStore = useAuthStore()
 
 const chatStore = useChatStore()
 const { loadingMessages } = storeToRefs(chatStore)
@@ -41,7 +44,19 @@ const conversationList = computed(() => dataSources.value.filter(item => (!item.
 const prompt = ref<string>('')
 const loading = ref<boolean>(false)
 const inputRef = ref<Ref | null>(null)
-const gpt_model = ref(useSettingStore().gpt_model ?? 'gemini-3-flash-preview')
+const settingStore = useSettingStore()
+const gpt_model = ref(settingStore.gpt_model || authStore.session?.defaultGptModel || DEFAULT_GPT_MODEL_FALLBACK)
+const availableGptModels = computed(() => {
+  const models = authStore.session?.availableGptModels?.filter(Boolean) || DEFAULT_AVAILABLE_GPT_MODELS_FALLBACK
+  if (models.includes(gpt_model.value))
+    return models
+  return [gpt_model.value, ...models].filter(Boolean)
+})
+
+watch(() => authStore.session?.defaultGptModel, (value) => {
+  if (!settingStore.gpt_model && value)
+    gpt_model.value = value
+}, { immediate: true })
 
 // 文件上传相关
 const uploadedImages = ref<string[]>([])
@@ -648,31 +663,17 @@ function handleExport() {
 }
 
 function handleModelChange() {
-  // 修改模型
-  let modelValue = gpt_model.value
-  if (modelValue === 'qwen-plus')
-    modelValue = 'gemini-3-pro'
-  else if (modelValue === 'gemini-3-pro')
-    modelValue = 'gemini-3-flash-preview'
-  else if (modelValue === 'gemini-3-flash-preview')
-    modelValue = 'gpt-5.1'
-  else if (modelValue === 'gpt-5.1')
-    modelValue = 'qwen-plus'
-  useSettingStore().updateSetting({ gpt_model: modelValue })
+  // 按环境变量中的模型列表循环切换
+  const models = availableGptModels.value
+  const currentIndex = models.indexOf(gpt_model.value)
+  const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % models.length : 0
+  const modelValue = models[nextIndex] || DEFAULT_GPT_MODEL_FALLBACK
+  settingStore.updateSetting({ gpt_model: modelValue })
   gpt_model.value = modelValue
 }
 
 const gptModelText = computed(() => {
-  if (gpt_model.value === 'qwen-plus')
-    return 'Qwen-Plus'
-  else if (gpt_model.value === 'gemini-3-pro')
-    return 'Gemini-3-Pro'
-  else if (gpt_model.value === 'gemini-3-flash-preview')
-    return 'Gemini-3-Flash'
-  else if (gpt_model.value === 'gpt-5.1')
-    return 'GPT-5.1'
-  else
-    return 'Gemini-3-Flash' // 默认显示
+  return gpt_model.value || DEFAULT_GPT_MODEL_FALLBACK
 })
 
 function handleDelete(index: number) {

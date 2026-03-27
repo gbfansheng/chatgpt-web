@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { NButton, NInput, NSlider, useMessage } from 'naive-ui'
 import { useSettingStore } from '@/store'
+import { useAuthStore } from '@/store/modules/auth'
 import type { SettingsState } from '@/store/modules/settings/helper'
+import { DEFAULT_GPT_MODEL_FALLBACK } from '@/store/modules/settings/helper'
 import { t } from '@/locales'
 
 const settingStore = useSettingStore()
+const authStore = useAuthStore()
 
 const ms = useMessage()
 
@@ -15,7 +18,13 @@ const temperature = ref(settingStore.temperature ?? 0.5)
 
 const top_p = ref(settingStore.top_p ?? 1)
 
-const gpt_model = ref(settingStore.gpt_model ?? "gpt-3.5-turbo-0125")
+const defaultGptModel = computed(() => authStore.session?.defaultGptModel || DEFAULT_GPT_MODEL_FALLBACK)
+const gpt_model = ref(settingStore.gpt_model || defaultGptModel.value)
+
+watch(defaultGptModel, (value) => {
+  if (!settingStore.gpt_model)
+    gpt_model.value = value
+}, { immediate: true })
 
 function updateSettings(options: Partial<SettingsState>) {
   settingStore.updateSetting(options)

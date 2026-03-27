@@ -4,7 +4,7 @@ export interface RequestProps {
   systemMessage: string
   temperature?: number
   top_p?: number
-  gpt_model: string
+  gpt_model?: string
   images?: string[]
   files?: Array<{ name: string; type: string; data: string }>
   conversationHistory?: Array<{ text: string; inversion: boolean }>
@@ -19,6 +19,8 @@ export interface ChatContext {
 
 export interface ModelConfig {
   apiModel?: ApiModel
+  defaultGptModel?: string
+  availableGptModels?: string[]
   reverseProxy?: string
   timeoutMs?: number
   socksProxy?: string
