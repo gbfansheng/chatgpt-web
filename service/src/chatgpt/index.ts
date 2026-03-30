@@ -31,14 +31,18 @@ const timeoutMs: number = !isNaN(+process.env.TIMEOUT_MS) ? +process.env.TIMEOUT
 // API配置
 const OPENAI_API_BASE_URL = process.env.OPENAI_API_BASE_URL || 'https://api.openai.com'
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+const OPENROUTER_API_BASE_URL = process.env.OPENROUTER_API_BASE_URL || 'https://openrouter.ai/api/v1'
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
+const OPENROUTER_HTTP_REFERER = process.env.OPENROUTER_HTTP_REFERER
+const OPENROUTER_APP_NAME = process.env.OPENROUTER_APP_NAME
 const DEEPSEEK_API_BASE_URL = process.env.DEEPSEEK_API_BASE_URL
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY
 const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
 const QWEN_API_KEY = process.env.QWEN_API_KEY
 const TUZI_API_BASE_URL = process.env.TUZI_API_BASE_URL || 'https://api.tu-zi.com'
 const TUZI_API_KEY = process.env.TUZI_API_KEY
-const DEFAULT_GPT_MODEL = process.env.VITE_DEFAULT_GPT_MODEL || process.env.OPENAI_API_MODEL || 'gemini-3-flash-preview'
-const DEFAULT_AVAILABLE_GPT_MODELS = ['qwen-plus', 'gemini-3-pro', 'gemini-3-flash-preview', 'gpt-5.1']
+const DEFAULT_GPT_MODEL = process.env.VITE_DEFAULT_GPT_MODEL || process.env.OPENAI_API_MODEL || 'google/gemini-3-flash-preview'
+const DEFAULT_AVAILABLE_GPT_MODELS = ['qwen-plus', 'google/gemini-3.1-pro-preview', 'google/gemini-3-flash-preview', 'gpt-5.4']
 const AVAILABLE_GPT_MODELS = (process.env.VITE_AVAILABLE_GPT_MODELS || '')
   .split(',')
   .map(item => item.trim())
@@ -72,8 +76,14 @@ interface APIMessage {
   }>
 }
 
+interface ProviderConfig {
+  baseURL: string
+  apiKey?: string
+  headers?: Record<string, string>
+}
+
 // 获取API配置
-function getAPIConfig(model: string) {
+function getAPIConfig(model: string): ProviderConfig {
   if (model.includes('deepseek')) {
     return {
       baseURL: `${DEEPSEEK_API_BASE_URL}/v1`,
@@ -86,7 +96,18 @@ function getAPIConfig(model: string) {
       apiKey: QWEN_API_KEY,
     }
   }
-  else if (model.includes('gemini') || model.includes('gpt-5.1')) {
+  else if (model.includes('gemini')) {
+    // Gemini 模型统一走 OpenRouter，直接兼容 google/gemini-* 这类模型名。
+    return {
+      baseURL: OPENROUTER_API_BASE_URL,
+      apiKey: OPENROUTER_API_KEY,
+      headers: {
+        ...(isNotEmptyString(OPENROUTER_HTTP_REFERER) ? { 'HTTP-Referer': OPENROUTER_HTTP_REFERER } : {}),
+        ...(isNotEmptyString(OPENROUTER_APP_NAME) ? { 'X-Title': OPENROUTER_APP_NAME } : {}),
+      },
+    }
+  }
+  else if (model.includes('gpt-5.4')) {
     return {
       baseURL: `${TUZI_API_BASE_URL}/v1`,
       apiKey: TUZI_API_KEY,
@@ -191,6 +212,7 @@ async function chatReplyProcess(options: RequestOptions) {
       headers: {
         'Authorization': `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
+        ...config.headers,
       },
       body: JSON.stringify(requestBody),
       agent,

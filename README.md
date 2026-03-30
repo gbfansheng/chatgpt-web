@@ -159,6 +159,12 @@ pnpm dev
 - `OPENAI_API_MODEL`  设置模型，可选，默认：`gpt-3.5-turbo`
 - `OPENAI_API_BASE_URL` 设置接口地址，可选，默认：`https://api.openai.com`
 - `OPENAI_API_DISABLE_DEBUG` 设置接口关闭 debug 日志，可选，默认：empty 不关闭
+- `OPENROUTER_API_KEY` 使用 `OpenRouter` 所需的 `apiKey`
+- `OPENROUTER_API_BASE_URL` 设置 `OpenRouter` 接口地址，可选，默认：`https://openrouter.ai/api/v1`
+- `OPENROUTER_HTTP_REFERER` 可选，传给 `OpenRouter` 的站点地址
+- `OPENROUTER_APP_NAME` 可选，传给 `OpenRouter` 的应用名称
+- `VITE_DEFAULT_GPT_MODEL` 可选，前后端共用默认模型，例如：`google/gemini-3-flash-preview`
+- `VITE_AVAILABLE_GPT_MODELS` 可选，可用模型列表，英文逗号分隔，例如：`google/gemini-3.1-pro-preview,google/gemini-3-flash-preview`
 
 `ACCESS_TOKEN` 可用：
 
@@ -265,9 +271,15 @@ services:
 | `MAX_REQUEST_PER_HOUR`          | 可选                   | 每小时最大请求次数，可选，默认无限                                        |
 | `TIMEOUT_MS`          | 可选                   | 超时时间，单位毫秒                                                                             |
 | `OPENAI_API_KEY`      | `OpenAI API` 二选一    | 使用 `OpenAI API` 所需的 `apiKey` [(获取 apiKey)](https://platform.openai.com/overview)            |
+| `OPENROUTER_API_KEY`      | 可选    | 使用 `OpenRouter` 所需的 `apiKey`            |
 | `OPENAI_ACCESS_TOKEN` | `Web API` 二选一       | 使用 `Web API` 所需的 `accessToken` [(获取 accessToken)](https://chat.openai.com/api/auth/session) |
 | `OPENAI_API_BASE_URL`   | 可选，`OpenAI API` 时可用 |  `API`接口地址  |
 | `OPENAI_API_MODEL`   | 可选，`OpenAI API` 时可用 |  `API`模型  |
+| `OPENROUTER_API_BASE_URL`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 接口地址，默认 `https://openrouter.ai/api/v1` |
+| `OPENROUTER_HTTP_REFERER`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 的 `HTTP-Referer` 请求头 |
+| `OPENROUTER_APP_NAME`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 的 `X-Title` 请求头 |
+| `VITE_DEFAULT_GPT_MODEL`   | 可选 | 默认模型，例如 `google/gemini-3-flash-preview` |
+| `VITE_AVAILABLE_GPT_MODELS`   | 可选 | 可用模型列表，逗号分隔 |
 | `API_REVERSE_PROXY`   | 可选，`Web API` 时可用 | `Web API` 反向代理地址 [详情](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy)    |
 | `SOCKS_PROXY_HOST`   | 可选，和 `SOCKS_PROXY_PORT` 一起时生效 | Socks代理    |
 | `SOCKS_PROXY_PORT`   | 可选，和 `SOCKS_PROXY_HOST` 一起时生效 | Socks代理端口    |

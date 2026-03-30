@@ -12,7 +12,7 @@
 
 ### 模型支持
 - ✅ 支持多 API 提供商 (OpenAI、DeepSeek、Qwen、Tuzi)
-- ✅ 添加 Gemini 模型支持 (gemini-3-pro, gemini-3-flash-preview)
+- ✅ 添加 Gemini 模型支持 (gemini-3.1-pro-preview, gemini-3-flash-preview)
 - ✅ 添加 GPT-5.1 模型支持
 - ✅ 简化模型切换 (Qwen-Plus, Gemini-3-Pro, Gemini-3-Flash, GPT-5.1)
 - ✅ 设置 Gemini-3-Flash 为默认模型
