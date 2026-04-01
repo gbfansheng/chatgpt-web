@@ -163,8 +163,8 @@ pnpm dev
 - `OPENROUTER_API_BASE_URL` 设置 `OpenRouter` 接口地址，可选，默认：`https://openrouter.ai/api/v1`
 - `OPENROUTER_HTTP_REFERER` 可选，传给 `OpenRouter` 的站点地址
 - `OPENROUTER_APP_NAME` 可选，传给 `OpenRouter` 的应用名称
-- `VITE_DEFAULT_GPT_MODEL` 可选，前后端共用默认模型，例如：`google/gemini-3-flash-preview`
-- `VITE_AVAILABLE_GPT_MODELS` 可选，可用模型列表，英文逗号分隔，例如：`google/gemini-3.1-pro-preview,google/gemini-3-flash-preview`
+- `VITE_DEFAULT_GPT_MODEL` 可选，前后端共用默认模型，例如：`gemini-3-flash-preview`
+- `VITE_AVAILABLE_GPT_MODELS` 可选，可用模型列表，英文逗号分隔，例如：`gemini-3-flash-preview`
 
 `ACCESS_TOKEN` 可用：
 
@@ -278,7 +278,7 @@ services:
 | `OPENROUTER_API_BASE_URL`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 接口地址，默认 `https://openrouter.ai/api/v1` |
 | `OPENROUTER_HTTP_REFERER`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 的 `HTTP-Referer` 请求头 |
 | `OPENROUTER_APP_NAME`   | 可选，`OpenRouter` 时可用 | `OpenRouter` 的 `X-Title` 请求头 |
-| `VITE_DEFAULT_GPT_MODEL`   | 可选 | 默认模型，例如 `google/gemini-3-flash-preview` |
+| `VITE_DEFAULT_GPT_MODEL`   | 可选 | 默认模型，例如 `gemini-3-flash-preview` |
 | `VITE_AVAILABLE_GPT_MODELS`   | 可选 | 可用模型列表，逗号分隔 |
 | `API_REVERSE_PROXY`   | 可选，`Web API` 时可用 | `Web API` 反向代理地址 [详情](https://github.com/transitive-bullshit/chatgpt-api#reverse-proxy)    |
 | `SOCKS_PROXY_HOST`   | 可选，和 `SOCKS_PROXY_PORT` 一起时生效 | Socks代理    |

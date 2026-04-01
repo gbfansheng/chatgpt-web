@@ -41,8 +41,8 @@ const QWEN_API_BASE_URL = process.env.QWEN_API_BASE_URL
 const QWEN_API_KEY = process.env.QWEN_API_KEY
 const TUZI_API_BASE_URL = process.env.TUZI_API_BASE_URL || 'https://api.tu-zi.com'
 const TUZI_API_KEY = process.env.TUZI_API_KEY
-const DEFAULT_GPT_MODEL = process.env.VITE_DEFAULT_GPT_MODEL || process.env.OPENAI_API_MODEL || 'google/gemini-3-flash-preview'
-const DEFAULT_AVAILABLE_GPT_MODELS = ['qwen-plus', 'google/gemini-3.1-pro-preview', 'google/gemini-3-flash-preview', 'gpt-5.4']
+const DEFAULT_GPT_MODEL = process.env.VITE_DEFAULT_GPT_MODEL || process.env.OPENAI_API_MODEL || 'gemini-3-flash-preview'
+const DEFAULT_AVAILABLE_GPT_MODELS = ['qwen-plus', 'gemini-3-flash-preview', 'gpt-5.4']
 const AVAILABLE_GPT_MODELS = (process.env.VITE_AVAILABLE_GPT_MODELS || '')
   .split(',')
   .map(item => item.trim())
@@ -97,7 +97,7 @@ function getAPIConfig(model: string): ProviderConfig {
     }
   }
   else if (model.includes('gemini')) {
-    // Gemini 模型统一走 OpenRouter，直接兼容 google/gemini-* 这类模型名。
+    // Gemini 模型统一走 OpenRouter，直接兼容 gemini-* 这类模型名。
     return {
       baseURL: OPENROUTER_API_BASE_URL,
       apiKey: OPENROUTER_API_KEY,

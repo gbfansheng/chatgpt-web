@@ -1,8 +1,8 @@
 import { ss } from '@/utils/storage'
 
 const LOCAL_NAME = 'settingsStorage'
-export const DEFAULT_GPT_MODEL_FALLBACK = 'google/gemini-3-flash-preview'
-export const DEFAULT_AVAILABLE_GPT_MODELS_FALLBACK = ['qwen-plus', 'google/gemini-3.1-pro-preview', 'google/gemini-3-flash-preview', 'gpt-5.4']
+export const DEFAULT_GPT_MODEL_FALLBACK = 'gemini-3-flash-preview'
+export const DEFAULT_AVAILABLE_GPT_MODELS_FALLBACK = ['qwen-plus', 'gemini-3-flash-preview', 'gpt-5.4']
 
 export interface SettingsState {
   systemMessage: string
