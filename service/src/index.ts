@@ -12,14 +12,18 @@ import * as db from './db'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const FILES_DIR = path.join(__dirname, '../data/files')
+// 附件固定存放在 service/data/files，避免开发态和构建态目录不一致。
+const FILES_DIR = path.resolve(__dirname, '../data/files')
 if (!fs.existsSync(FILES_DIR)) fs.mkdirSync(FILES_DIR, { recursive: true })
 
 // 保存图片到磁盘
 function saveImageToDisk(dataUrl: string) {
   const hash = crypto.createHash('md5').update(dataUrl).digest('hex')
-  const match = dataUrl.match(/^data:image\/(\w+);base64,/)
-  const ext = match ? `.${match[1]}` : '.png'
+  const match = dataUrl.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/)
+  if (!match)
+    throw new Error('图片数据格式不正确')
+  const mime = match[1]
+  const ext = `.${mime.split('/')[1].replace('+xml', '')}`
   const filename = `${hash}${ext}`
   const filepath = path.join(FILES_DIR, filename)
   if (!fs.existsSync(filepath)) {
@@ -35,7 +39,8 @@ function loadImageFromDisk(filename: string) {
   if (!fs.existsSync(filepath)) return null
   const data = fs.readFileSync(filepath)
   const ext = path.extname(filename).slice(1) || 'png'
-  return `data:image/${ext};base64,${data.toString('base64')}`
+  const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext}`
+  return `data:${mime};base64,${data.toString('base64')}`
 }
 
 // 保存文件到磁盘，返回文件信息（不含 data）
@@ -89,7 +94,7 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
   try {
     const { prompt, options = {}, systemMessage, temperature, top_p, gpt_model, images, files, conversationHistory, tools, tool_choice } = req.body as RequestProps
     let firstChunk = true
-    await chatReplyProcess({
+    const response = await chatReplyProcess({
       message: prompt,
       lastContext: options,
       process: (chat: any) => {
@@ -106,6 +111,9 @@ router.post('/chat-process', [auth, limiter], async (req, res) => {
       tools,
       tool_choice,
     })
+    // 有些模型或错误场景不会进入流式回调，最终结果也要写给前端。
+    if (firstChunk && response?.data)
+      res.write(JSON.stringify(response.data))
   }
   catch (error) {
     res.write(JSON.stringify(error))

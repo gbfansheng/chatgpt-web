@@ -2,8 +2,12 @@ import initSqlJs, { Database as SqlJsDatabase } from 'sql.js'
 import path from 'path'
 import fs from 'fs'
 import crypto from 'crypto'
+import { fileURLToPath } from 'url'
 
-const dbPath = path.join(__dirname, '../../data/chat.db')
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+// 数据库固定存放在 service/data，避免开发态和构建态使用不同目录。
+const dbPath = path.resolve(__dirname, '../data/chat.db')
 let db: SqlJsDatabase
 
 // 保存数据库到文件

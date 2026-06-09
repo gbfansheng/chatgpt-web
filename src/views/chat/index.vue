@@ -398,6 +398,7 @@ async function onConversation() {
       // 构建对话历史 - 关键修复！
       const conversationHistory = dataSources.value
         .filter(item => !item.loading && !item.error)
+        .slice(0, -1)
         .map(item => ({
           text: item.text,
           inversion: item.inversion ?? false
@@ -420,6 +421,23 @@ async function onConversation() {
             chunk = responseText.substring(lastIndex)
           try {
             const data = JSON.parse(chunk)
+            if (data.status === 'Fail') {
+              updateChat(
+                currentUuid.value,
+                dataSources.value.length - 1,
+                {
+                  dateTime: new Date().toLocaleString(),
+                  text: data.message,
+                  inversion: false,
+                  error: true,
+                  loading: false,
+                  conversationOptions: null,
+                  requestOptions: { prompt: message, options: { ...options } },
+                },
+              )
+              return
+            }
+
             updateChat(
               currentUuid.value,
               dataSources.value.length - 1,
